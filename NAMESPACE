@@ -1,0 +1,6 @@
+export('GFF_convert')
+export('processCounts')
+export('ExCluster')
+export('plotExonlog2FC')
+### Only imports the featureCounts function from the Rsubread package
+importFrom('Rsubread', 'featureCounts')
