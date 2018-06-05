@@ -17,6 +17,7 @@
 \headsep=0in
 
 \begin{document}
+\SweaveOpts{concordance=TRUE}
 
 % add title
 \title{ExCluster package: Robust detection of differentially spliced genes in RNA-seq data}
@@ -173,6 +174,75 @@ Assuming that you cannot have all of your BAM files exclusively within a given f
 \noindent Just as a reminder, if my username is 'matanner' on a Mac OS system, the full path to my first BAM file might be "/Users/matanner/Documents/iPSC\_RNAseq/hESC\_cond1\_rep2.bam\\
 
 \noindent In this way, you must specify the exact filepath of each BAM file, and ensure that file path is valid. Although slow, this method offers greater control over your analysis.
+
+\section{Running ExCluster "toy dataset" examples to test package functionality}
+The ExCluster package contains a small dataset for 3 genes, with 4 BAM files split evenly between two conditions. This toy dataset also includes sub-sampled GTF and GFF files, as well as various ExCluster results objects. If you are having trouble executing ExCluster functions, or simply wish to test the functionality of the package, you may use the following examples to test each function:\\
+
+First we test the GFF\_convert function, which takes a GTF file input and flattens it into a GFF file. We run the code as follows:\\
+
+\begin{scriptsize}
+<<>>=
+library(ExCluster)
+# load the sub-sampled GTF file path from the ExCluster package
+GTF_file <- system.file("extdata","sub_gen.v23.gtf", package = "ExCluster")
+# now run GTF\_file without assigning a GFF\_file to write out, assigning the results to the GFF object
+GFF <- GFF_convert(GTF.File=GTF_file)
+@
+\end{scriptsize}
+
+Next we can run the processCounts function on the small BAM file dataset as follows:\\
+
+\begin{scriptsize}
+<<>>=
+library(ExCluster)
+# specify the path to the ExCluster package
+ExClust_Path <- system.file(package="ExCluster")
+# now find the bam files within that folder
+bamFiles <- list.files(ExClust_Path,recursive=TRUE,pattern="*.bam",full.names=TRUE)
+# now grab the path to the sub-sampled example GFF file
+GFF_file <- system.file("extdata","sub_gen.v23.ExClust.gff",package="ExCluster")
+# assign sample names (only 2 replicates per condition in this example)
+sampleNames <- c("iPSC_cond1_rep1","iPSC_cond1_rep2","iPSC_cond2_rep1","iPSC_cond2_rep2")
+# now run processCounts, with pairedReads=TRUE because we are counting paired-end data
+normCounts <- processCounts(bam.Files=bamFiles, sample.Names=sampleNames, GFF.File=GFF_file, pairedReads=TRUE)
+@
+\end{scriptsize}
+
+The main function of the package, ExCluster, can be tested with the following code:\\
+
+\begin{scriptsize}
+<<>>=
+library(ExCluster)
+# specify the path to the normCounts file in the ExCluster package
+countsPath<- system.file("extdata","normCounts.txt",package="ExCluster")
+# now read in the normCounts.txt file
+normCounts <- read.table(file=countsPath,header=TRUE,row.names=1,stringsAsFactors=FALSE)
+# now grab the path to the sub-sampled example GFF file
+GFF_file <- system.file("extdata","sub_gen.v23.ExClust.gff",package="ExCluster")
+# assign condition numbers to your samples (we have 4 samples, 2 replicates per condition)
+condNums <- c(1,1,2,2)
+# now we run ExCluster, assigning its output to the ExClustResults variable
+# we are not writing out the ExClustResults table, nor are we plotting exons
+# we also use CombineExons=TRUE, since we are conducting a standard analysis
+ExClust_Results <- ExCluster(exonCounts=normCounts,cond.Nums=condNums,GFF.File=GFF_file,CombineExons=TRUE)
+@
+\end{scriptsize}
+
+Lastly, we can test the exon log2FC plotting function plotExonlog2FC as follows:\\
+
+\begin{scriptsize}
+<<>>=
+library(ExCluster)
+# grab the file path to sub-sampled results from an ExCluster function analysis
+ExClust_respath <- system.file("extdata","sub_ExClust_results.txt",package="ExCluster")
+# load this data into R
+ExClust_Results <- read.table(file=ExClust_respath,sep="\t",header=TRUE,row.names=1,stringsAsFactors=FALSE)
+# now we must specify a directory to write images to
+outDir <- paste(system.file(package="ExCluster"),"/extdata/Images/",sep="")
+# now we can run our exon log2FC plotting function
+plotExonlog2FC(results.Data=ExClust_Results, out.Dir=outDir)
+@
+\end{scriptsize}
 
 \section{Authors}
 R. Matthew Tanner, William L. Stanford, and Theodore J. Perkins\\

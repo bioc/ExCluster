@@ -66,7 +66,7 @@ If you are unable to manually install & load Bioconductor or Rsubread, please co
     ### Run featureCounts on BAM files
     ### The authors and original license holders of featureCounts and the Rsubread package make no warranty for its performance
     fC <- featureCounts(files = bam.Files, annot.ext = SAF.annot, isGTFAnnotationFile = FALSE, requireBothEndsMapped = FALSE,
-                        allowMultiOverlap = TRUE, strandSpecific = 1, largestOverlap = FALSE, isPairedEnd = pairedReads,s)
+                        allowMultiOverlap = TRUE, strandSpecific = 1, largestOverlap = FALSE, isPairedEnd = pairedReads)
 
     cat('',"Running library size normalization...",'',sep="\n")
 

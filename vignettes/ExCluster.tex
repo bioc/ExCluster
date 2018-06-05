@@ -176,6 +176,199 @@ Assuming that you cannot have all of your BAM files exclusively within a given f
 
 \noindent In this way, you must specify the exact filepath of each BAM file, and ensure that file path is valid. Although slow, this method offers greater control over your analysis.
 
+\section{Running ExCluster "toy dataset" examples to test package functionality}
+The ExCluster package contains a small dataset for 3 genes, with 4 BAM files split evenly between two conditions. This toy dataset also includes sub-sampled GTF and GFF files, as well as various ExCluster results objects. If you are having trouble executing ExCluster functions, or simply wish to test the functionality of the package, you may use the following examples to test each function:\\
+
+First we test the GFF\_convert function, which takes a GTF file input and flattens it into a GFF file. We run the code as follows:\\
+
+\begin{scriptsize}
+\begin{Schunk}
+\begin{Sinput}
+> library(ExCluster)
+> # load the sub-sampled GTF file path from the ExCluster package
+> GTF_file <- system.file("extdata","sub_gen.v23.gtf", package = "ExCluster")
+> # now run GTF\_file without assigning a GFF\_file to write out, assigning the results to the GFF object
+> GFF <- GFF_convert(GTF.File=GTF_file)
+\end{Sinput}
+\end{Schunk}
+\end{scriptsize}
+
+Next we can run the processCounts function on the small BAM file dataset as follows:\\
+
+\begin{scriptsize}
+\begin{Schunk}
+\begin{Sinput}
+> library(ExCluster)
+> # specify the path to the ExCluster package
+> ExClust_Path <- system.file(package="ExCluster")
+> # now find the bam files within that folder
+> bamFiles <- list.files(ExClust_Path,recursive=TRUE,pattern="*.bam",full.names=TRUE)
+> # now grab the path to the sub-sampled example GFF file
+> GFF_file <- system.file("extdata","sub_gen.v23.ExClust.gff",package="ExCluster")
+> # assign sample names (only 2 replicates per condition in this example)
+> sampleNames <- c("iPSC_cond1_rep1","iPSC_cond1_rep2","iPSC_cond2_rep1","iPSC_cond2_rep2")
+> # now run processCounts, with pairedReads=TRUE because we are counting paired-end data
+> normCounts <- processCounts(bam.Files=bamFiles, sample.Names=sampleNames, GFF.File=GFF_file, pairedReads=TRUE)
+\end{Sinput}
+\begin{Soutput}
+        ==========     _____ _    _ ____  _____  ______          _____  
+        =====         / ____| |  | |  _ \|  __ \|  ____|   /\   |  __ \ 
+          =====      | (___ | |  | | |_) | |__) | |__     /  \  | |  | |
+            ====      \___ \| |  | |  _ <|  _  /|  __|   / /\ \ | |  | |
+              ====    ____) | |__| | |_) | | \ \| |____ / ____ \| |__| |
+        ==========   |_____/ \____/|____/|_|  \_\______/_/    \_\_____/
+       Rsubread 1.28.1
+
+//========================== featureCounts setting ===========================\\
+||                                                                            ||
+||             Input files : 4 BAM files                                      ||
+||                           P /home/matanner/R/x86_64-pc-linux-gnu-libra ... ||
+||                           P /home/matanner/R/x86_64-pc-linux-gnu-libra ... ||
+||                           P /home/matanner/R/x86_64-pc-linux-gnu-libra ... ||
+||                           P /home/matanner/R/x86_64-pc-linux-gnu-libra ... ||
+||                                                                            ||
+||      Dir for temp files : .                                                ||
+||                 Threads : 1                                                ||
+||                   Level : meta-feature level                               ||
+||              Paired-end : yes                                              ||
+||         Strand specific : stranded                                         ||
+||      Multimapping reads : not counted                                      ||
+|| Multi-overlapping reads : counted                                          ||
+||   Min overlapping bases : 1                                                ||
+||                                                                            ||
+||          Chimeric reads : counted                                          ||
+||        Both ends mapped : not required                                     ||
+||                                                                            ||
+\\===================== http://subread.sourceforge.net/ ======================//
+
+//================================= Running ==================================\\
+||                                                                            ||
+|| Load annotation file ./.Rsubread_UserProvidedAnnotation_pid3626 ...        ||
+||    Features : 19                                                           ||
+||    Meta-features : 19                                                      ||
+||    Chromosomes/contigs : 1                                                 ||
+||                                                                            ||
+|| Process BAM file /home/matanner/R/x86_64-pc-linux-gnu-library/3.4/ExCl ... ||
+||    Paired-end reads are included.                                          ||
+||    Assign fragments (read pairs) to features...                            ||
+||                                                                            ||
+||    WARNING: reads from the same pair were found not adjacent to each       ||
+||             other in the input (due to read sorting by location or         ||
+||             reporting of multi-mapping read pairs).                        ||
+||                                                                            ||
+||    Read re-ordering is performed.                                          ||
+||                                                                            ||
+||    Total fragments : 920                                                   ||
+||    Successfully assigned fragments : 389 (42.3%)                           ||
+||    Running time : 0.00 minutes                                             ||
+||                                                                            ||
+|| Process BAM file /home/matanner/R/x86_64-pc-linux-gnu-library/3.4/ExCl ... ||
+||    Paired-end reads are included.                                          ||
+||    Assign fragments (read pairs) to features...                            ||
+||                                                                            ||
+||    WARNING: reads from the same pair were found not adjacent to each       ||
+||             other in the input (due to read sorting by location or         ||
+||             reporting of multi-mapping read pairs).                        ||
+||                                                                            ||
+||    Read re-ordering is performed.                                          ||
+||                                                                            ||
+||    Total fragments : 619                                                   ||
+||    Successfully assigned fragments : 197 (31.8%)                           ||
+||    Running time : 0.00 minutes                                             ||
+||                                                                            ||
+|| Process BAM file /home/matanner/R/x86_64-pc-linux-gnu-library/3.4/ExCl ... ||
+||    Paired-end reads are included.                                          ||
+||    Assign fragments (read pairs) to features...                            ||
+||                                                                            ||
+||    WARNING: reads from the same pair were found not adjacent to each       ||
+||             other in the input (due to read sorting by location or         ||
+||             reporting of multi-mapping read pairs).                        ||
+||                                                                            ||
+||    Read re-ordering is performed.                                          ||
+||                                                                            ||
+||    Total fragments : 960                                                   ||
+||    Successfully assigned fragments : 158 (16.5%)                           ||
+||    Running time : 0.00 minutes                                             ||
+||                                                                            ||
+|| Process BAM file /home/matanner/R/x86_64-pc-linux-gnu-library/3.4/ExCl ... ||
+||    Paired-end reads are included.                                          ||
+||    Assign fragments (read pairs) to features...                            ||
+||                                                                            ||
+||    WARNING: reads from the same pair were found not adjacent to each       ||
+||             other in the input (due to read sorting by location or         ||
+||             reporting of multi-mapping read pairs).                        ||
+||                                                                            ||
+||    Read re-ordering is performed.                                          ||
+||                                                                            ||
+||    Total fragments : 920                                                   ||
+||    Successfully assigned fragments : 138 (15.0%)                           ||
+||    Running time : 0.00 minutes                                             ||
+||                                                                            ||
+||                         Read assignment finished.                          ||
+||                                                                            ||
+\\===================== http://subread.sourceforge.net/ ======================//
+
+
+Running library size normalization...
+\end{Soutput}
+\end{Schunk}
+\end{scriptsize}
+
+The main function of the package, ExCluster, can be tested with the following code:\\
+
+\begin{scriptsize}
+\begin{Schunk}
+\begin{Sinput}
+> library(ExCluster)
+> # specify the path to the normCounts file in the ExCluster package
+> countsPath<- system.file("extdata","normCounts.txt",package="ExCluster")
+> # now read in the normCounts.txt file
+> normCounts <- read.table(file=countsPath,header=TRUE,row.names=1,stringsAsFactors=FALSE)
+> # now grab the path to the sub-sampled example GFF file
+> GFF_file <- system.file("extdata","sub_gen.v23.ExClust.gff",package="ExCluster")
+> # assign condition numbers to your samples (we have 4 samples, 2 replicates per condition)
+> condNums <- c(1,1,2,2)
+> # now we run ExCluster, assigning its output to the ExClustResults variable
+> # we are not writing out the ExClustResults table, nor are we plotting exons
+> # we also use CombineExons=TRUE, since we are conducting a standard analysis
+> ExClust_Results <- ExCluster(exonCounts=normCounts,cond.Nums=condNums,GFF.File=GFF_file,CombineExons=TRUE)
+\end{Sinput}
+\begin{Soutput}
+Initializing ...
+
+Reading in data ...
+
+Combining common exons ...
+
+Pre-processing data ...
+
+Running main ExCluster module (very long) ...
+
+Running statistical tests ...
+
+Final ExCluster data organization & output ...
+\end{Soutput}
+\end{Schunk}
+\end{scriptsize}
+
+Lastly, we can test the exon log2FC plotting function plotExonlog2FC as follows:\\
+
+\begin{scriptsize}
+\begin{Schunk}
+\begin{Sinput}
+> library(ExCluster)
+> # grab the file path to sub-sampled results from an ExCluster function analysis
+> ExClust_respath <- system.file("extdata","sub_ExClust_results.txt",package="ExCluster")
+> # load this data into R
+> ExClust_Results <- read.table(file=ExClust_respath,sep="\t",header=TRUE,row.names=1,stringsAsFactors=FALSE)
+> # now we must specify a directory to write images to
+> outDir <- paste(system.file(package="ExCluster"),"/extdata/Images/",sep="")
+> # now we can run our exon log2FC plotting function
+> plotExonlog2FC(results.Data=ExClust_Results, out.Dir=outDir)
+\end{Sinput}
+\end{Schunk}
+\end{scriptsize}
+
 \section{Authors}
 R. Matthew Tanner, William L. Stanford, and Theodore J. Perkins\\
 CMM Department, Faculty of Medicine, University of Ottawa\\
