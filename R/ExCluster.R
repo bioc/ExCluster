@@ -420,13 +420,19 @@ ExCluster <- function(exonCounts=NULL, cond.Nums=NULL, annot.GFF = NULL, GFF.Fil
 
     ### now we work on organizing the newlog2FC read count data
     # remove all exon bin rows with fewer than 2 mean reads across samples
-    newlog2FC <- newlog2FC[which(apply(newlog2FC,1,mean) >= 2),]
+    newlog2FC <- newlog2FC[which(apply(newlog2FC,1,mean) > 1),]
     # now add EnsID to remove duplicated rows
     newlog2FC$EnsID <- sub(":.*","",rownames(newlog2FC))
-    # identify duplicated rows
-    dupRows <- which(duplicated(newlog2FC))
-    # remove duplicated rows
-    newlog2FC <- newlog2FC[-c(dupRows),]
+    # identify duplicated rows by condition means
+    Cond1Means <- apply(newlog2FC[,Indices1],1,mean)
+    Cond2Means <- apply(newlog2FC[,Indices2],1,mean)
+    dupRows1 <- which(duplicated(newlog2FC[,Indices1]))
+    dupRows2 <- which(duplicated(newlog2FC[,Indices2]))
+    dupRows <- which(dupRows1%in%dupRows2)
+    # remove duplicated rows if there are any
+    if (length(dupRows) > 0){
+        newlog2FC <- newlog2FC[-c(dupRows),]
+    }
     # remove EnsiD column
     newlog2FC <- newlog2FC[,-c(ncol(newlog2FC))]
     # set up newlog2FC "Bins"

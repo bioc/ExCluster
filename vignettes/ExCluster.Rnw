@@ -17,7 +17,6 @@
 \headsep=0in
 
 \begin{document}
-\SweaveOpts{concordance=TRUE}
 
 % add title
 \title{ExCluster package: Robust detection of differentially spliced genes in RNA-seq data}
