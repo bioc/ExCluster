@@ -13,7 +13,7 @@ GFF_convert <- function(GTF.File=NULL,GFF.File=NULL){
     }
 
     ### load GTF and set up final data frame
-    temp.gtf.data<-read.table(GTF_file, header=FALSE, sep="\t", stringsAsFactors=FALSE)
+    temp.gtf.data<-read.table(GTF.File, header=FALSE, sep="\t", stringsAsFactors=FALSE)
 
     ### now double check to make sure that 9 columns exactly are present in the GTF file
     if (ncol(temp.gtf.data) != 9){
