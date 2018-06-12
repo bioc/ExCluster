@@ -17,7 +17,7 @@ GFF_convert <- function(GTF.File=NULL,GFF.File=NULL){
 
     ### now double check to make sure that 9 columns exactly are present in the GTF file
     if (ncol(temp.gtf.data) != 9){
-        stop(call. = "Error! Your GTF file did not have 9 tab delimited columns. If you have edited your GTF file, please ensure the original number of columns and type of columns are retained.
+        stop(call = "Your GTF file did not have 9 tab delimited columns. If you have edited your GTF file, please ensure the original number of columns and type of columns are retained.
              Additionally, if you have edited your GTF file, please ensure that tabs were used to delimit columns.
              If this error persists, please re-download your GTF annotations from the source database, and try again.")
     }
@@ -26,7 +26,6 @@ GFF_convert <- function(GTF.File=NULL,GFF.File=NULL){
     gtf.data<-temp.gtf.data[which(temp.gtf.data$V3 =='exon'),]
     # clean up temp.gtf.data
     rm(temp.gtf.data)
-
 
     # set up final plus and neg strand data frames for final output
     final.dataframe.plus.final<-as.data.frame(matrix(ncol=9,nrow=0))
@@ -60,14 +59,20 @@ GFF_convert <- function(GTF.File=NULL,GFF.File=NULL){
             starts.plus <- array()
             stops.plus <- array()
             starts.plus[1] <- 1
-            for (i in 2:length(genes.plus)){
-                if (genes.plus[i] != genes.plus[(i-1)]){
-                    stops.plus[Counter] <- i-1
-                    Counter <- Counter + 1
-                    starts.plus[Counter] <- i
+            for (i in 1:length(genes.plus)){
+                # make a variable for the next gene, but make sure it isn't higher than the max 'i'
+                nextValue <- min((i+1),length(genes.plus))
+                if (genes.plus[i] != genes.plus[(i+1)] || i == length(genes.plus)){
+                    # now determine if we are at the end of the GTF file or not
+                    if (i == length(genes.plus)){
+                        stops.plus[Counter] <- i
+                    }else{
+                        stops.plus[Counter] <- i
+                        Counter <- Counter + 1
+                        starts.plus[Counter] <- i+1
+                    }
                 }
             }
-            stops.plus[Counter] <- length(genes.plus)
             for (b in 1:length(genes)){
                 #tempgene.data<-chrom.data[chrom.data$V10==b,]
                 tempgene.data <- chrom.data[starts.plus[b]:stops.plus[b],]
@@ -184,14 +189,20 @@ GFF_convert <- function(GTF.File=NULL,GFF.File=NULL){
             starts.neg <- array()
             stops.neg <- array()
             starts.neg[1] <- 1
-            for (i in 2:length(genes.neg)){
-                if (genes.neg[i] != genes.neg[(i-1)]){
-                    stops.neg[Counter] <- i-1
-                    Counter <- Counter + 1
-                    starts.neg[Counter] <- i
+            for (i in 1:length(genes.neg)){
+                # make a variable for the next gene, but make sure it isn't higher than the max 'i'
+                nextValue <- min((i+1),length(genes.neg))
+                if (genes.neg[i] != genes.neg[(i+1)] || i == length(genes.neg)){
+                    # now determine if we are at the end of the GTF file or not
+                    if (i == length(genes.neg)){
+                        stops.neg[Counter] <- i
+                    }else{
+                        stops.neg[Counter] <- i
+                        Counter <- Counter + 1
+                        starts.neg[Counter] <- i+1
+                    }
                 }
             }
-            stops.neg[Counter] <- length(genes.neg)
 
 
             for (b in 1:length(genes)){
