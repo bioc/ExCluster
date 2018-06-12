@@ -31,7 +31,7 @@ Alternatively, you can assign the BAM file names as a character vector to the ba
     if(is.null(annot.GFF) == TRUE){
         if (is.null(GFF.File) == FALSE){
             if (file.exists(GFF.File) == TRUE){
-                annot.GFF <- read.table(file=GTF.File,header=FALSE,stringsAsFactors=FALSE)
+                annot.GFF <- read.table(file=GFF.File,header=FALSE,stringsAsFactors=FALSE)
             }else{
                 stop(call="The GFF file path you provided to GFF.File does not exist. Please verify you have given the correct, full filepath including file extension. For example, a file path may look like: /Users/username/path/to/file.gff")
             }
