@@ -73,7 +73,7 @@ The only additional note is the CombineExons=TRUE argument. Some exons are co-ex
 \noindent This concludes the quick run explanation.
 
 \section{Detailed ExCluster pipeline explanation}
-This Vignette assumes that you have successfully installed ExCluster in R, using Bioconductor. If you have not yet installed ExCluster with Bioconductor, please try to run the following -- when it asks you if you want to update [a/s/n] packages, type 'n' and hit enter:\\
+This Vignette assumes that you have successfully installed ExCluster in R, using Bioconductor. If you have not yet installed ExCluster with Bioconductor, please try to run the following:\\
 
 \noindent\R{> source("https://bioconductor.org/biocLite.R")}\\
 \R{> biocLite("ExCluster")}\\
@@ -84,7 +84,7 @@ If you have trouble installing ExCluster, please check that bioconductor install
 
 \noindent\R{> library(ExCluster)}\\
 
-The next step in the ExCluster pipeline is to take a GTF genome annotation file, and flatten it into a GFF file, containing non-overlapping exon bins. This is done using the function \R{GFF\_convert}. GTF files may be obtained from sources such as Ensembl, GENCODE, RefSeq, and UCSC. We strongly recommend using GENCODE GTF files, as they were used to test and develop ExCluster. Within the Stanford and Perkins labs, we have also had more successful bioinformatics analyses in general with GENCODE annotations. However, any GTF file from the above should work, so long as chromosome identifiers include 'chr'. This is important to note when using Ensembl GTF files, which come in two versions: those with chromsome identifiers of '1', '2', '3', etc., and those with identifiers of 'chr1', 'chr2', 'chr3', etc. -- only the latter GTF files are confirmed to work proplerly with the ExCluster pipeline.\\
+The next step in the ExCluster pipeline is to take a GTF genome annotation file, and flatten it into a GFF file, containing non-overlapping exon bins. This is done using the function \R{GFF\_convert}. GTF files may be obtained from sources such as Ensembl, GENCODE, RefSeq, and UCSC. We strongly recommend using GENCODE GTF files, as they were used to test and develop ExCluster. Within the Stanford and Perkins labs, we have generally had more successful bioinformatics analyses with GENCODE annotations.\\
 
 Before we run \R{GFF\_convert}, we must specify the GTF file location, and we should also specify a GFF file location to write the output to. Saving GFF files is not necessary, as the GFF annotations can be carried through the pipeline if conducted in a single session. However, saving GFF files is good practice, incase data needs to be re-analyzed later on. Once a GFF file has been created, it may be re-used in future analyses.\\
 

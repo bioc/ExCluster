@@ -23,3 +23,5 @@ ExCluster.synctex.gz
 ./vignettes/ExCluster.synctex.gz
 ./vignettes/._ExCluster.Rnw
 ./vignettes/._ExCluster.pdf
+./vignettes/ExCluster.toc
+./vignettes/ExCluster.log
