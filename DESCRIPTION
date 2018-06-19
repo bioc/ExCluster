@@ -1,11 +1,10 @@
 Package: ExCluster
-Type: Package
 Title: ExCluster robustly detects differentially expressed exons between two
     conditions of RNA-seq data, requiring at least two independent biological
-    replicates per condition.
-Version: 0.99.5
-Author: 2018-06-01
+    replicates per condition
+Version: 0.99.6
 Author: R. Matthew Tanner, William L. Stanford, and Theodore J. Perkins
+Date: 2018-06-17
 Maintainer: R. Matthew Tanner <rtann038@uottawa.ca>
 Description: ExCluster flattens Ensembl and GENCODE GTF files into GFF files,
     which are used to count reads per non-overlapping exon bin from BAM files.
@@ -20,8 +19,7 @@ Description: ExCluster flattens Ensembl and GENCODE GTF files into GFF files,
     differentially spliced gene, which helps scientists develop hypothesis and
     target differential splicing events for RT-qPCR validation in the wet lab.
 biocViews: DifferentialSplicing, RNASeq, Software
-Depends: Rsubread
-Imports: Rsubread
+Imports: stats, methods, grDevices, graphics, utils
+Depends: Rsubread, GenomicRanges
 License: GPL-3
 Encoding: UTF-8
-LazyData: true

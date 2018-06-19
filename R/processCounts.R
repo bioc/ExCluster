@@ -1,8 +1,12 @@
 processCounts <- function(bam.Files=NULL,sample.Names=NULL,annot.GFF=NULL,GFF.File=NULL,pairedReads=FALSE,out.File=NULL){
 
+    ### make sure R doesn't add factors -- R creators never should have made this default = TRUE
+    options(stringsAsFactors=FALSE)
+
     ### make sure that bam.Files were entered when running processCounts
     if(is.null(bam.Files) == TRUE){
-        stop(call="No BAM files were entered when running processCounts(). Please ensure the bam.Files argument is assigned a character vector of full BAM file paths when calling processCounts().
+        stop(call="No BAM files were entered when running processCounts().
+Please ensure the bam.Files argument is assigned a character vector of full BAM file paths when calling processCounts().
 Alternatively, you can assign the BAM file names as a character vector to the bam.Files variable, such as:
     bam.Files <- c('/path/to/file1.bam','/path/to/file2.bam',...)")
     }
@@ -33,26 +37,17 @@ Alternatively, you can assign the BAM file names as a character vector to the ba
             if (file.exists(GFF.File) == TRUE){
                 annot.GFF <- read.table(file=GFF.File,header=FALSE,stringsAsFactors=FALSE)
             }else{
-                stop(call="The GFF file path you provided to GFF.File does not exist. Please verify you have given the correct, full filepath including file extension. For example, a file path may look like: /Users/username/path/to/file.gff")
+                stop(call="The GFF file path you provided to GFF.File does not exist.
+Please verify you have given the correct, full filepath including file extension.
+    For example, a file path may look like: /Users/username/path/to/file.gff")
             }
         }else{
-            stop(call="The GFF.File argument was not provided when processCounts was run, nor was the GFF.Data argument assigned. One of these two arguments must be assigned.
-                The GFF.File argument should be a full file path to a GFF file, such as: /Users/username/path/to/file.gff
-                Alternatively, you can give the annot.GFF argument a GFF data frame from the GFF_convert function, such as: annot.GFF = GFF")
+            stop(call="The GFF.File argument was not provided when processCounts was run, nor was the annot.GFF argument assigned.
+One of annot.GFF or GFF.File must be specified when running processCounts().
+    The GFF.File argument should be a full file path to a GFF file, such as: /Users/username/path/to/file.gff
+    Alternatively, you can give the annot.GFF argument a GFF data frame from the GFF_convert function, such as: annot.GFF = GFF")
         }
     }
-
-    ### now load Rsubread library if it isn't loaded
-    if (("Rsubread" %in% rownames(installed.packages())) == FALSE){
-        library(Rsubread)
-        # now make sure it loaded again -- if not, error out this function
-        if (("Rsubread" %in% rownames(installed.packages())) == FALSE){
-            stop(call="The Rsubread package from Bioconductor is required to run this function.
-It appears that attempts to load this package have failed. Please re-install Rsubread from Bioconductor.
-If you are unable to manually install & load Bioconductor or Rsubread, please contact the appropriate maintainer.")
-        }
-    }
-
 
     # geometric mean function
     gm_mean = function(x, na.rm=TRUE){
@@ -65,8 +60,8 @@ If you are unable to manually install & load Bioconductor or Rsubread, please co
 
     ### Run featureCounts on BAM files
     ### The authors and original license holders of featureCounts and the Rsubread package make no warranty for its performance
-    fC <- featureCounts(files = bam.Files, annot.ext = SAF.annot, isGTFAnnotationFile = FALSE, requireBothEndsMapped = FALSE,
-                        allowMultiOverlap = TRUE, strandSpecific = 1, largestOverlap = FALSE, isPairedEnd = pairedReads)
+    fC <- featureCounts(files = bam.Files, annot.ext = SAF.annot, isGTFAnnotationFile = FALSE,
+            requireBothEndsMapped = FALSE, allowMultiOverlap = TRUE, largestOverlap = FALSE, isPairedEnd = pairedReads)
 
     cat('',"Running library size normalization...",'',sep="\n")
 
@@ -121,7 +116,11 @@ If you are unable to manually install & load Bioconductor or Rsubread, please co
         ### now add up the values in the 'Indices' dataframe, where 1 = within the shorth for that sample
         ### rows with a sum of 6 had that exon within the shorth for every exon, indicating they are good 'control' exons
         indicesSum <- apply(Indices,1,sum)
-        CommonData <- DataTable[which(indicesSum == 6),]
+        CommonData <- DataTable[which(indicesSum == ncol(Indices)),]
+        # if less than 500 exon bins, be more lenient
+        if (ncol(CommonData) < 500){
+            CommonData <- DataTable[which(indicesSum == ceiling(ncol(Indices))/2),]
+        }
 
         sizeFactors <- matrix(nrow=1,ncol=NCols)
 
@@ -155,12 +154,13 @@ If you are unable to manually install & load Bioconductor or Rsubread, please co
 
         # warn the user that they didn't have a good amount of data
         warning(call="You had fewer than 1000 exon bins with RNA-seq reads counted into them.
-Please be aware that ExCluster expects whole transcriptome GFF and BAM files counted, or else it cannot properly correct library sizes and tune statistics.
-If you are simply testing an ExCluster example, please ignore this warning.")
+Please be aware that ExCluster expects whole transcriptome GFF and BAM files counted.
+Without these full files, ExCluster cannot properly correct library sizes and tune statistics.
+    If you are simply testing an ExCluster example, please ignore this warning.")
     }
 
     if (is.null(out.File) == FALSE){
-         write.table(AdjustedData[,1:NCols],file=out.File,row.names=FALSE,col.names=TRUE,quote=FALSE)
+         write.table(AdjustedData,file=out.File,sep="\t",row.names=TRUE,col.names=TRUE,quote=FALSE)
     }
     return(AdjustedData)
 

@@ -1,0 +1,40 @@
+# The following is the code used to generate the 'toy' dataset
+# 3 genes were selected from a simulated RNA-seq dataset in our lab:
+# ENSG00000125895, ENSG00000124134, and ENSG00000124208
+
+# We sub-sampled the human GENCODE v23 file in linux as follows (non-runnable):
+grep ENSG00000125895 gencode.v23.annotation.gtf > ENSG00000125895.txt
+grep ENSG00000124134 gencode.v23.annotation.gtf > ENSG00000124134.txt
+grep ENSG00000124208 gencode.v23.annotation.gtf > ENSG00000124208.txt
+
+cat ENSG00000125895.txt ENSG00000124134.txt ENSG00000124208.txt > sub_gen.v23.gtf
+
+# We then sub-sampled each of the four RNA-seq samples in linux with samtools:
+
+### COND1 REP 1
+samtools view -S -b iPSC_cond1_rep1.bam chr20:1180561-1185415 > iPSC_cond1_rep1_SUB1.bam
+samtools view -S -b iPSC_cond1_rep1.bam chr20:45092310-45101112 > iPSC_cond1_rep1_SUB2.bam
+samtools view -S -b iPSC_cond1_rep1.bam chr20:50081124-50153637 > iPSC_cond1_rep1_SUB3.bam
+
+samtools merge iPSC_batch1_20_cond1_rep1.bam iPSC_cond1_rep1_SUB1.bam iPSC_cond1_rep1_SUB2.bam iPSC_cond1_rep1_SUB3.bam
+
+### COND1 REP 2
+samtools view -S -b iPSC_cond1_rep2.bam chr20:1180561-1185415 > iPSC_cond1_rep2_SUB1.bam
+samtools view -S -b iPSC_cond1_rep2.bam chr20:45092310-45101112 > iPSC_cond1_rep2_SUB2.bam
+samtools view -S -b iPSC_cond1_rep2.bam chr20:50081124-50153637 > iPSC_cond1_rep2_SUB3.bam
+
+samtools merge iPSC_batch1_20_cond1_rep2.bam iPSC_cond1_rep2_SUB1.bam iPSC_cond1_rep2_SUB2.bam iPSC_cond1_rep2_SUB3.bam
+
+### COND2 REP 1
+samtools view -S -b iPSC_cond2_rep1.bam chr20:1180561-1185415 > iPSC_cond2_rep1_SUB1.bam
+samtools view -S -b iPSC_cond2_rep1.bam chr20:45092310-45101112 > iPSC_cond2_rep1_SUB2.bam
+samtools view -S -b iPSC_cond2_rep1.bam chr20:50081124-50153637 > iPSC_cond2_rep1_SUB3.bam
+
+samtools merge iPSC_batch1_20_cond2_rep1.bam iPSC_cond2_rep1_SUB1.bam iPSC_cond2_rep1_SUB2.bam iPSC_cond2_rep1_SUB3.bam
+
+### COND2 REP 2
+samtools view -S -b iPSC_cond2_rep2.bam chr20:1180561-1185415 > iPSC_cond2_rep2_SUB1.bam
+samtools view -S -b iPSC_cond2_rep2.bam chr20:45092310-45101112 > iPSC_cond2_rep2_SUB2.bam
+samtools view -S -b iPSC_cond2_rep2.bam chr20:50081124-50153637 > iPSC_cond2_rep2_SUB3.bam
+
+samtools merge iPSC_batch1_20_cond2_rep2.bam iPSC_cond2_rep2_SUB1.bam iPSC_cond2_rep2_SUB2.bam iPSC_cond2_rep2_SUB3.bam

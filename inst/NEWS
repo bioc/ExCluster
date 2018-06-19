@@ -1,7 +1,27 @@
-ExCluster Version 0.99 submission to bioconductor!
-
+Changes in Version 0.99.0
 - ExCluster package now passes R CMD build and check, and BiocCheck!
 - takes about 2-3 hours to run on large datasets
 - added a "Toy Dataset" for function manual runnable examples within the package
 - more code in ExCluster has been turned into functions to reduce repeated code
 - still some repeated code (such as parsing EnsIDs and exon bins)
+
+Changes in Version 0.99.1
+- Removed extraneous files causing errors in the build
+
+Changes in Version 0.99.2
+- Reformatted the Vignette & DESCRIPTION to process the Vignette correctly with Sweave
+
+Changes in Version 0.99.3
+- Removed extraneous files causing errors in the build
+
+Changes in Version 0.99.4
+- Reformatted the Vignette & DESCRIPTION to process the Vignette correctly with Sweave
+
+Changes in Version 0.99.5
+- Fixed incorrectly pushed changes, which caused build error
+
+Changes in Version 0.99.6
+- Completely re-wrote the GFF_convert() function to have helper functions and take advantage of GenomicRanges
+- Changed processCounts, which was incorrectly counting reads as stranded (is now set to unstranded)
+- Altered ExCluster null hypothesis simulations to run faster (about 4 times faster now)
+- Made numerous small changes to address the issues with first Bioconductor review
