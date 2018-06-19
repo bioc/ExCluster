@@ -7,10 +7,10 @@ ExCluster.Rproj
 ._ExCluster.Rd
 ._processCounts.Rd
 ._plotExonlog2FC.Rd
-./man/_GFF_convert.Rd
-./man/_ExCluster.Rd
-./man/_processCounts.Rd
-./man/_plotExonlog2FC.Rd
+./man/._GFF_convert.Rd
+./man/._ExCluster.Rd
+./man/._processCounts.Rd
+./man/._plotExonlog2FC.Rd
 ExCluster-concordance.tex
 ExCluster_examples.R
 ExCluster.pdf
@@ -21,3 +21,5 @@ ExCluster.synctex.gz
 ./vignettes/ExCluster.pdf
 ./vignettes/ExCluster.tex
 ./vignettes/ExCluster.synctex.gz
+./vignettes/._ExCluster.Rnw
+./vignettes/._ExCluster.pdf
