@@ -19,9 +19,11 @@ plotExonlog2FC(results.Data, out.Dir, FDR.cutoff)
 }
 \examples{
 # grab the file path to sub-sampled results from an ExCluster function analysis
-ExClust_respath <- system.file("extdata","sub_ExClust_results.txt",package="ExCluster")
+ExClust_respath <- system.file("extdata","sub_ExClust_results.txt",
+    package="ExCluster")
 # load this data into R
-ExClust_Results <- read.table(file=ExClust_respath,sep="\t",header=TRUE,row.names=1,stringsAsFactors=FALSE)
+ExClust_Results <- read.table(file=ExClust_respath,sep="\t",header=TRUE,
+    row.names=1,stringsAsFactors=FALSE)
 # now we must specify a directory to write images to
 outDir <- paste(system.file(package="ExCluster"),"/extdata/Images/",sep="")
 # now we can run our exon log2FC plotting function

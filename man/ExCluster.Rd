@@ -7,7 +7,8 @@ ExCluster is the main function in this package, which clusters exon bins within 
 The ExCluster function takes an input of normalized exon bin read counts per sample, and only accepts data from exactly two conditions at once, requiring two biological replicates per condition. ExCluster also requires GFF annotations to annotate exon bins
 }
 \usage{
-ExCluster(exonCounts, cond.Nums, annot.GFF, GFF.File, out.Dir, result.Filename, CombineExons, plot.Results, FDR.cutoff)
+ExCluster(exonCounts, cond.Nums, annot.GFF, GFF.File, out.Dir,
+    result.Filename, CombineExons=TRUE, plot.Results=FALSE, FDR.cutoff=0.05)
 }
 \arguments{
   \item{exonCounts}{exonCounts must be assigned a data frame of normalized read counts per exon bin, which are attained from running the processCounts function. For example, if the results of processCounts are assigned to the normCounts variable, exonCounts is assigned as: exonCounts=normCounts This input is required.
@@ -33,7 +34,8 @@ ExCluster(exonCounts, cond.Nums, annot.GFF, GFF.File, out.Dir, result.Filename, 
 # specify the path to the normCounts file in the ExCluster package
 countsPath<- system.file("extdata","normCounts.txt",package="ExCluster")
 # now read in the normCounts.txt file
-normCounts <- read.table(file=countsPath,header=TRUE,row.names=1,stringsAsFactors=FALSE)
+normCounts <- read.table(file=countsPath,header=TRUE,row.names=1,
+    stringsAsFactors=FALSE)
 # now grab the path to the sub-sampled example GFF file
 GFF_file <- system.file("extdata","sub_gen.v23.ExClust.gff",package="ExCluster")
 # assign condition numbers to your samples (we have 4 samples, 2 replicates per condition)
@@ -41,16 +43,8 @@ condNums <- c(1,1,2,2)
 # now we run ExCluster, assigning its output to the ExClustResults variable
 # we are not writing out the ExClustResults table, nor are we plotting exons
 # we also use CombineExons=TRUE, since we are conducting a standard analysis
-ExClust_Results <- ExCluster(exonCounts=normCounts,cond.Nums=condNums,GFF.File=GFF_file,CombineExons=TRUE)
-
-
-# load the ExCluster package as follows
-#library(ExCluster)
-## follow the ExCluster vignette to set up the variables required, which are:
-# normCounts, condNums, GFF, and outDir
-## run ExCluster as follows:
-# ExClustResults <- ExCluster(exonCounts=normCounts,cond.Nums=condNums, annot.GFF=GFF,out.Dir=outDir,
-# plot.Results=TRUE,CombineExons=TRUE)
+ExClust_Results <- ExCluster(exonCounts=normCounts,cond.Nums=condNums,
+    GFF.File=GFF_file)
 }
 \value{
 This is the main function of the ExCluster package, and returns a data frame of exon bin log2FCs, log2 read variances, exon clustering per gene, p-values, FDRs, and normalized exon counts. The results of the ExCluster function should typically be assigned to a variable, such as 'ExClustResults'.
