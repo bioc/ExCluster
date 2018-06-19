@@ -24,6 +24,7 @@
 \author{R. Matthew Tanner, William L. Stanford, and Theodore J. Perkins}
 \date{1 June 2018}
 \maketitle
+\tableofcontents
 
 \section{Introduction}
 This vignette will detail the basic usage of the ExCluster package, both quickly and step-by-step. IMPORTANT NOTE: ExCluster will not function with a Windows operating system, and will only install on linux and MacOSX machines. Unfortunately, this package requires Rsubread, which is not availble for Windows.\\
