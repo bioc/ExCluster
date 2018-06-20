@@ -24,7 +24,7 @@ processCounts(bam.Files,sample.Names,annot.GFF,GFF.File,pairedReads,out.File,tem
     }
     \item{temp.Dir}{This argument should be given a variable with a string which contains the full file path to a temporary directory to which you wish to write featureCounts temporary files. In some cases this can greatly speed up read counting. By default, featureCounts temporary files will be written to R's tempdir() directory.
     }
-    \item{num.Cores}{This argument should be given a positive integer value which corresponds to the number of cores you with featureCounts to use, when exon reads are counted from your GFF file. For example, using 4 cores would look like: num.Cores=4  This argument defaults to using 1 core within the function.}
+    \item{num.Cores}{This argument should be given a positive integer value which corresponds to the number of cores you with featureCounts to use, when exon reads are counted from your GFF file. For example, using 4 cores would look like: num.Cores=4  This argument defaults to using 1 core within the function.
     }
 }
 \examples{
