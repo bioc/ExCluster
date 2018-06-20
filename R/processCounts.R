@@ -1,4 +1,4 @@
-processCounts <- function(bam.Files=NULL,sample.Names=NULL,annot.GFF=NULL,GFF.File=NULL,pairedReads=FALSE,out.File=NULL){
+processCounts <- function(bam.Files=NULL,sample.Names=NULL,annot.GFF=NULL,GFF.File=NULL,pairedReads=FALSE,out.File=NULL, num.Cores=NULL, temp.Dir=NULL){
 
     ### make sure R doesn't add factors -- R creators never should have made this default = TRUE
     options(stringsAsFactors=FALSE)
@@ -58,9 +58,38 @@ One of annot.GFF or GFF.File must be specified when running processCounts().
     SAF.annot <- data.frame(annot.GFF$V2,annot.GFF$V1,annot.GFF$V4,annot.GFF$V5,annot.GFF$V7)
     colnames(SAF.annot) <- c("GeneID","Chr","Start","End","Strand")
 
+    ### default nCores = 1 if not specified, or incorrectly specified
+    nCores <- 1
+    # now check if we are using multiple cores
+    if (is.null(num.Cores) == FALSE){
+        # check to make sure num.Cores is a 'double' type variable
+        if (is.double(num.Cores) == TRUE){
+            nCores <- num.Cores
+        }else{
+            warning(call="You entered a non-integer value for num.Cores -- it should have a value of >= 1.
+    Defaulting number of cores to 1 for this run.")
+            nCores <- 1
+        }
+    }
+
+    ### default the 'tmpDir' argument for featureCounts to tempdir() if not specified
+    tmpDir <- tempdir()
+    # now check if the temp.Dir argument was specified in ExClusters input
+    if (is.null(temp.Dir) == FALSE){
+        # make sure we can write to temp.Dir
+        WriteCheck <- file.access(temp.Dir, mode=2)
+        if (WriteCheck != 0){
+            tmpDir <- temp.Dir
+        }else{
+            warning(call = "The temp.Dir path you provided was not accessible by R for read/write.
+    Please ensure the temp.Dir argument is given a valid folder path with read/write permissions.
+    Defaulting temporary directory to R's tempdir() function.")
+        }
+    }
+
     ### Run featureCounts on BAM files
     ### The authors and original license holders of featureCounts and the Rsubread package make no warranty for its performance
-    fC <- featureCounts(files = bam.Files, annot.ext = SAF.annot, isGTFAnnotationFile = FALSE,
+    fC <- featureCounts(files = bam.Files, annot.ext = SAF.annot, isGTFAnnotationFile = FALSE, nthreads = nCores, tmpDir=tmpDir,
             requireBothEndsMapped = FALSE, allowMultiOverlap = TRUE, largestOverlap = FALSE, isPairedEnd = pairedReads)
 
     cat('',"Running library size normalization...",'',sep="\n")
