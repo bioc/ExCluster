@@ -2,7 +2,7 @@ Package: ExCluster
 Title: ExCluster robustly detects differentially expressed exons between two
     conditions of RNA-seq data, requiring at least two independent biological
     replicates per condition
-Version: 0.99.7
+Version: 0.99.8
 Author: R. Matthew Tanner, William L. Stanford, and Theodore J. Perkins
 Date: 2018-06-20
 Maintainer: R. Matthew Tanner <rtann038@uottawa.ca>
