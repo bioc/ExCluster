@@ -654,7 +654,7 @@ Otherwise, please make sure the same GFF file used to count exon reads is provid
     }
 
     ### now grab indices for all genes flagged for removal (RemovalIndices) above\
-    if (is.null(RemovalIndices) == FALSE){
+    if (length(RemovalIndices) > 0){
         RemovalIndices <- unlist(RemovalIndices)
         ### remove these genes from log2Clusters
         log2Clusters <- log2Clusters[-c(RemovalIndices),]
