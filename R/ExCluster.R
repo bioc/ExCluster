@@ -499,7 +499,7 @@ Otherwise, please make sure the same GFF file used to count exon reads is provid
         # Variable start will be used through loop
         Start <- 1
         # make newlog2FC list to dump results from CombineExons into
-        temp_log2FC <- list()
+        temp_log2FC <- vector("list", 1)
 
         for (i in 1:NROW_GFF){
             nextValue <- min((i+1), NROW_GFF)
@@ -633,7 +633,7 @@ Otherwise, please make sure the same GFF file used to count exon reads is provid
     log2IDs <- substr(log2IDs,(nchar(log2IDs)-9),nchar(log2IDs))
     Counter <- 1
     Start <- 1
-    RemovalIndices <- NULL
+    RemovalIndices <- vector("list", 1)
 
     ### run loop to flag genes with fewer than 2 average reads in either condition 1 or condition 2
     for (i in 1:nrow(log2Clusters)){
