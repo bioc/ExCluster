@@ -1,6 +1,5 @@
-ExCluster <- function(exonCounts=NULL, cond.Nums=NULL, annot.GFF = NULL,
-                      GFF.File=NULL, out.Dir=NULL, result.Filename=NULL,
-                      CombineExons=TRUE,plot.Results=FALSE,FDR.cutoff=0.05){
+ExCluster <- function(exonCounts=NULL, cond.Nums=NULL, annot.GFF = NULL, GFF.File=NULL, out.Dir=NULL,
+                      result.Filename=NULL, CombineExons=TRUE,plot.Results=FALSE,FDR.cutoff=0.05){
 
     ### make sure R doesn't add factors -- R creators never should have made this default = TRUE
     options(stringsAsFactors=FALSE)
@@ -10,35 +9,44 @@ ExCluster <- function(exonCounts=NULL, cond.Nums=NULL, annot.GFF = NULL,
 
     ### check to make sure a normalized exon count matrix was provided as input
     if (is.null(exonCounts) == TRUE){
-        stop(call = "You did provide a normalized exon count matrix to the exonCounts argument.Please obtain normalized exon counts from processCounts() in the form of a global variable, and assign said variable to exonCounts.
-             For example, if you followed the vignette, you should have a normCounts variable. Please specify the exonCounts=normCounts argument when running this function.")
+        stop(call = "You did provide a normalized exon count matrix to the exonCounts argument.
+Please obtain normalized exon counts from processCounts() and assign the resutls to exonCounts.
+    For example, if you followed the vignette, you should have a normCounts variable.
+    In this case, you could specify: exonCounts=normCounts")
     }
 
     ### ensure the number of columns in the exonCounts parameter equal the number of cond.Nums
     if (ncol(exonCounts) != length(cond.Nums)){
-        stop(call = "Your number of exonCounts columns did not equal the length of your number of condition identifiers. Please ensure that you entered correct condition identifiers to cond.Nums, such as cond.Nums=c(1,1,1,2,2,2) for 3 repliates per 2 conditions.
-    Additionally, please also ensure your normalized counts provided to exonCounts have only count data columns, and that Gene:ExonBin identifiers are provided as rownames.
-    If you are unsure, please refer to the vignette, or re-run processCounts and assign its output to a variable, and then assign that variable to the exonCounts argument.")
+        stop(call = "Your number of exonCounts columns did not equal the length of your number of condition identifiers.
+Please ensure that you entered correct condition identifiers to cond.Nums, such as cond.Nums=c(1,1,1,2,2,2).
+    Additionally, please also ensure your normalized counts provided to exonCounts have only count data columns.
+All Gene:ExonBin identifiers should be provided as rownames. If you are unsure, please refer to the vignette.")
     }
 
     ### check to ensure that there are no duplicated data columns in exonCounts
     CheckDups <- duplicated(t(exonCounts))
     if (any(CheckDups) == TRUE){
         DupCols <- which(CheckDups == TRUE)
-        print(paste("Columns",DupCols,"were duplicated in your normalized exon count data. Please re-check your BAM file names and re-run processCounts."))
-        stop(call = "One of your normalized exon count columns was duplicated! If this is a mistake, please ensure you specified the correct BAM files to processCounts, and re-run that function.
-    However, if you are attempting to duplicate count columns to bypass ExClusters requirement for biological replicates, please be aware that this will not work well. ExCluster computes variances per condition, and one of your conditions will have zero variance. This will results in high false positive rates. ")
-    }
+        print(paste("Columns",DupCols,"were duplicated in your normalized exon count data.
+    Please re-check your BAM file names and re-run processCounts."))
+        stop(call = "One of your normalized exon count columns was duplicated!
+If this is a mistake, please double check your normalized count table, or re-run processCounts().
+However, if you were attempting to duplicate columns to analyze data without biological replicates, this will not work.
+ExClust requires biological replicates to estimate variance within conditions, and duplicate columns yield variances of zero.")
+        }
 
     ### check to make sure either a GFF data structure or GFF file path were specified
     if (is.null(annot.GFF) == TRUE){
         if (is.null(GFF.File) == TRUE){
-            stop(call = "You must provide either GFF annotation data or a GFF file path. Please assign the annot.GFF argument a variable name containing the GFF data, such as annot.GFF=GFF. Alternatively, please specify a full GFF file path, such as: GFF.File=/Users/username/path/to/file.gff")
+            stop(call = "You must provide either GFF annotation data or a GFF file path.
+Please assign the annot.GFF argument a variable name containing the GFF data, such as annot.GFF=GFF.
+    Alternatively, please specify a full GFF file path, such as: GFF.File=/Users/username/path/to/file.gff")
         }else{
             ### Test if GFF.File works
             if(file.exists(GFF.File) != TRUE){
-                stop(call = "The GFF file path you entered did not exist. Please verify that you have assigned the exactly correct path to the GFF.File argument.
-    For example, your argument when running ExCluster should look something like this: GFF.File=/Users/username/path/to/file.gff")
+                stop(call = "The GFF file path you entered did not exist.
+Please verify that you have assigned the exactly correct path to the GFF.File argument.
+For example, your argument when running ExCluster should look something like this: GFF.File=/Users/username/path/to/file.gff")
             }
         }
     }
@@ -104,16 +112,17 @@ ExCluster <- function(exonCounts=NULL, cond.Nums=NULL, annot.GFF = NULL,
         Sim_log2var <- matrix(NA,nrow=NumIterations,ncol=NumRows)
 
         for (l in 1:NumRows){
-            SimulatedVector1 <- abs(rnorm(n = NumIterations, mean=log2(((apply(log2Clusters[rows[l],c(log2Indices1,log2Indices2)],1,mean)*2)*Gene_R1)+1),
-                                                              sd=sqrt(log2Clusters$var1[rows[l]])))
-            SimulatedVector2 <- abs(rnorm(n = NumIterations, mean=log2(((apply(log2Clusters[rows[l],c(log2Indices1,log2Indices2)],1,mean)*2)*Gene_R2)+1),
-                                                              sd=sqrt(log2Clusters$var2[rows[l]])))
+            SimulatedVector1 <- abs(rnorm(n = NumIterations, sd=sqrt(log2Clusters$var1[rows[l]]),
+                                          mean=log2(((apply(log2Clusters[rows[l],c(log2Indices1,log2Indices2)],1,mean)*2)*Gene_R1)+1)))
+            SimulatedVector2 <- abs(rnorm(n = NumIterations, sd=sqrt(log2Clusters$var2[rows[l]]),
+                                          mean=log2(((apply(log2Clusters[rows[l],c(log2Indices1,log2Indices2)],1,mean)*2)*Gene_R2)+1)))
 
             Sim_log2FC[,l] <- SimulatedVector2 - SimulatedVector1
             Sim_log2var[,l] <- log2Clusters$var[rows[l]]
         }
 
-        Nonparam_Clust_Dists <-vapply(1:NumIterations,Permuted_ES_nullhypo,Sim_log2FC=Sim_log2FC, Sim_log2var=Sim_log2var, NumRows=NumRows,FUN.VALUE = c(Res=0))
+        Nonparam_Clust_Dists <-vapply(1:NumIterations,Permuted_ES_nullhypo,Sim_log2FC=Sim_log2FC,
+                                      Sim_log2var=Sim_log2var, NumRows=NumRows,FUN.VALUE = c(Res=0))
         return(Nonparam_Clust_Dists)
     }
 
@@ -189,7 +198,8 @@ ExCluster <- function(exonCounts=NULL, cond.Nums=NULL, annot.GFF = NULL,
         variance.matrix <- numeric(0)
         for (j in 1:ncol(x)) variance.matrix[j] = var(x[, j]) * (n - 1)/n
         Somme.variance.clusters <- 0
-        for (u in 1:k) Somme.variance.clusters <- Somme.variance.clusters + sqrt((variance.clusters[u, ] %*% (variance.clusters[u, ])))
+        for (u in 1:k) Somme.variance.clusters <- Somme.variance.clusters +
+                                                        sqrt((variance.clusters[u, ] %*% (variance.clusters[u, ])))
         stdev <- (1/k) * sqrt(Somme.variance.clusters)
         scat <- (1/k) * (Somme.variance.clusters/sqrt(variance.matrix %*% variance.matrix))
         scat <- list(stdev = stdev, centers = centers.matrix, variance.intraclusters = variance.clusters, scatt = scat)
@@ -365,8 +375,8 @@ ExCluster <- function(exonCounts=NULL, cond.Nums=NULL, annot.GFF = NULL,
     ## ensure exactly 2 conditions
     if (length(uCondNums) != 2){
         stop(call = "You did not specify exactly 2 condition numbers to the cond.Nums argument.
-For example, if your data contains two conditions with three replicates each, in order, please use: cond.Nums=c(1,1,1,2,2,2)
-As another example, if your count data alternates columns with cond1, cond2, cond1, cond2, etc., please use: cond.Nums=c(1,2,1,2,1,2)")
+For example, if your data contains two conditions with three replicates each, please use: cond.Nums=c(1,1,1,2,2,2).
+If your count data alternates condition columns, such as cond1, cond2, cond1, cond2, etc., use: cond.Nums=c(1,2,1,2,1,2)")
     }
 
     ## condition indices
@@ -654,7 +664,7 @@ Otherwise, please make sure the same GFF file used to count exon reads is provid
     }
 
     ### now grab indices for all genes flagged for removal (RemovalIndices) above\
-    if (length(RemovalIndices) > 0){
+    if (length(unlist(RemovalIndices)) > 0){
         RemovalIndices <- unlist(RemovalIndices)
         ### remove these genes from log2Clusters
         log2Clusters <- log2Clusters[-c(RemovalIndices),]
@@ -790,7 +800,8 @@ Otherwise, please make sure the same GFF file used to count exon reads is provid
             ###################  RUN PERMUATIONS PER GENE  ####################
 
             ## grab overall log2FC of gene for simulation
-            gene_log2FC <- log2(mean(apply(log2Clusters[rows,log2Indices2],2,sum))+1) - log2(mean(apply(log2Clusters[rows,log2Indices1],2,sum))+1)
+            gene_log2FC <- log2(mean(apply(log2Clusters[rows,log2Indices2],2,sum))+1) -
+                                log2(mean(apply(log2Clusters[rows,log2Indices1],2,sum))+1)
             Gene.FC <- 2^gene_log2FC
             ## gene ratio 1
             Gene.R1 <- 1/(1+Gene.FC)
@@ -798,7 +809,8 @@ Otherwise, please make sure the same GFF file used to count exon reads is provid
             Gene.R2 <- Gene.FC/(1+Gene.FC)
 
             ### Run first 20 iterations
-            Nullhypo_Dists <- generate_Nullhypo_Dists(NumIterations=20, gene_FC=Gene.FC, Gene_R1=Gene.R1, Gene_R2=Gene.R2, NumRows=NRows)
+            Nullhypo_Dists <- generate_Nullhypo_Dists(NumIterations=20, gene_FC=Gene.FC,
+                                                      Gene_R1=Gene.R1, Gene_R2=Gene.R2, NumRows=NRows)
             # compute pval percentile in observed null hypothesis cluster distances
             f <- ecdf(Nullhypo_Dists)
             PVal <- 1 - f(Observed_clust_dist)
@@ -806,7 +818,8 @@ Otherwise, please make sure the same GFF file used to count exon reads is provid
             ##############  NOW RUN 30 MORE ITERATIONS IF 'PVal' <= 0.5
             if (PVal <= 0.5){
                 ### Run 30 more iterations
-                Nullhypo_Dists_temp <- generate_Nullhypo_Dists(NumIterations=30, gene_FC=Gene.FC, Gene_R1=Gene.R1, Gene_R2=Gene.R2, NumRows=NRows)
+                Nullhypo_Dists_temp <- generate_Nullhypo_Dists(NumIterations=30, gene_FC=Gene.FC,
+                                                               Gene_R1=Gene.R1, Gene_R2=Gene.R2, NumRows=NRows)
                 # combine these results with previous
                 Nullhypo_Dists <- c(Nullhypo_Dists, Nullhypo_Dists_temp)
                 # compute pval percentile in observed null hypothesis cluster distances
@@ -817,7 +830,8 @@ Otherwise, please make sure the same GFF file used to count exon reads is provid
             ##############  NOW RUN 50 MORE ITERATIONS IF 'PVal' <= 0.2
             if (PVal <= 0.2){
                 ### Run 50 more iterations
-                Nullhypo_Dists_temp <- generate_Nullhypo_Dists(NumIterations=50, gene_FC=Gene.FC, Gene_R1=Gene.R1, Gene_R2=Gene.R2, NumRows=NRows)
+                Nullhypo_Dists_temp <- generate_Nullhypo_Dists(NumIterations=50, gene_FC=Gene.FC,
+                                                               Gene_R1=Gene.R1, Gene_R2=Gene.R2, NumRows=NRows)
                 # combine these results with previous
                 Nullhypo_Dists <- c(Nullhypo_Dists, Nullhypo_Dists_temp)
                 # compute pval percentile in observed null hypothesis cluster distances
@@ -828,7 +842,8 @@ Otherwise, please make sure the same GFF file used to count exon reads is provid
             ##############  NOW RUN 100 MORE ITERATIONS IF 'PVal' <= 0.05
             if (PVal <= 0.05){
                 ### Run 100 more iterations
-                Nullhypo_Dists_temp <- generate_Nullhypo_Dists(NumIterations=100, gene_FC=Gene.FC, Gene_R1=Gene.R1, Gene_R2=Gene.R2, NumRows=NRows)
+                Nullhypo_Dists_temp <- generate_Nullhypo_Dists(NumIterations=100, gene_FC=Gene.FC,
+                                                               Gene_R1=Gene.R1, Gene_R2=Gene.R2, NumRows=NRows)
                 # combine these results with previous
                 Nullhypo_Dists <- c(Nullhypo_Dists, Nullhypo_Dists_temp)
                 # compute pval percentile in observed null hypothesis cluster distances
@@ -839,7 +854,8 @@ Otherwise, please make sure the same GFF file used to count exon reads is provid
             ##############  NOW RUN 300 MORE ITERATIONS IF 'PVal' <= 0.01
             if (PVal <= 0.01){
                 ### Run 300 more iterations
-                Nullhypo_Dists_temp <- generate_Nullhypo_Dists(NumIterations=300, gene_FC=Gene.FC, Gene_R1=Gene.R1, Gene_R2=Gene.R2, NumRows=NRows)
+                Nullhypo_Dists_temp <- generate_Nullhypo_Dists(NumIterations=300, gene_FC=Gene.FC,
+                                                               Gene_R1=Gene.R1, Gene_R2=Gene.R2, NumRows=NRows)
                 # combine these results with previous
                 Nullhypo_Dists <- c(Nullhypo_Dists, Nullhypo_Dists_temp)
                 # compute pval percentile in observed null hypothesis cluster distances
@@ -850,7 +866,8 @@ Otherwise, please make sure the same GFF file used to count exon reads is provid
             ##############  NOW RUN 500 MORE ITERATIONS IF 'PVal' <= 0.004
             if (PVal <= 0.004){
                 ### Run 500 more iterations
-                Nullhypo_Dists_temp <- generate_Nullhypo_Dists(NumIterations=500, gene_FC=Gene.FC, Gene_R1=Gene.R1, Gene_R2=Gene.R2, NumRows=NRows)
+                Nullhypo_Dists_temp <- generate_Nullhypo_Dists(NumIterations=500, gene_FC=Gene.FC,
+                                                               Gene_R1=Gene.R1, Gene_R2=Gene.R2, NumRows=NRows)
                 # combine these results with previous
                 Nullhypo_Dists <- c(Nullhypo_Dists, Nullhypo_Dists_temp)
                 # compute pval percentile in observed null hypothesis cluster distances
@@ -860,8 +877,8 @@ Otherwise, please make sure the same GFF file used to count exon reads is provid
             ### Now if PVal == 0, use gamma distributions to estimate PValue better, but it can't be higher than 0.0001
             if (PVal == 0){
                 # p-value based on gamma function
-                PVal <- gm_mean(pgamma(Observed_clust_dist, Nullhypo_Dists, lower = FALSE) * gamma(Nullhypo_Dists))
-                PVal <- min(PVal, 0.00001)
+                PVal <- gm_mean(pgamma(Observed_clust_dist, Nullhypo_Dists, lower.tail = FALSE) * gamma(Nullhypo_Dists))
+                PVal <- min(PVal, 0.0001)
             }
 
             # clean up
@@ -900,7 +917,7 @@ Otherwise, please make sure the same GFF file used to count exon reads is provid
         # estimate the number of null hypothesis genes
         NumNull <- length(which(Catch_PVals[,2] > pvalCutoff))
         # the estimated number of false positives in 'NumTrue'
-        NumFalsePos <- length(which(Catch_PVals[,2] <= pvalCutoff+0.020))-NumTrue
+        NumFalsePos <- (length(which(Catch_PVals[,2] <= 0.1))-NumTrue)/((0.11-pvalCutoff)/pvalCutoff)
         # now estimate the minimum p-value of the null hypothesis
         minNullPVal <- gm_mean(vapply(1:100,function(x){
             # generate an initial uniform p-value distribution for the total NumNull
@@ -925,8 +942,10 @@ Otherwise, please make sure the same GFF file used to count exon reads is provid
     }else{
 
         ### This part of the code will be run if less than 4000 expressed genes were identified
-        warning(call = "You have entered transcriptome data which contains fewer than 4000 expressed genes. ExCluster cannot run advanced statistics (yielding better tuned FDRs) with < 4000 expressed genes.
-Please avoid running ExCluster on sub-sections of a genome (i.e. only certain chromosomes), as background expressed genes are used to tune statistics.
+        warning(call = "You have entered transcriptome data which contains fewer than 4000 expressed genes.
+ExCluster cannot run advanced statistics (yielding better tuned FDRs) with < 4000 expressed genes.
+Please avoid running ExCluster on sub-sections of a genome (i.e. only certain chromosomes),
+as background expressed genes are used to tune statistics.
 
 If you are running test data to get ExCluster working, ignore this warning.")
 
@@ -1058,9 +1077,11 @@ If you are running test data to get ExCluster working, ignore this warning.")
     EnsG <- gsub(pattern = '\\:.*',replacement = "",x = rownames(log2FC))
 
     ### now re-arrange log2FC columns to be more logical
-    final.log2FC <- data.frame(EnsG, ExonBins ,log2FC$Genes,log2FC$Cluster,log2FC$log2FC,log2FC$log2Variance,log2FC$pval,log2FC$FDR,GFF.Chr,GFF.Strand,GFF.Start,GFF.End)
+    final.log2FC <- data.frame(EnsG, ExonBins ,log2FC$Genes,log2FC$Cluster,log2FC$log2FC,
+                               log2FC$log2Variance,log2FC$pval,log2FC$FDR,GFF.Chr,GFF.Strand,GFF.Start,GFF.End)
     # rename columns
-    colnames(final.log2FC) <- c("EnsG","Exon_bin","Gene_name","Cluster","log2FC","log2Var","pval","FDR","Chr","Strand","Start","End")
+    colnames(final.log2FC) <- c("EnsG","Exon_bin","Gene_name","Cluster",
+                                "log2FC","log2Var","pval","FDR","Chr","Strand","Start","End")
     # re-add the read counts at the end of the dataframe
     final.log2FC <- data.frame(final.log2FC,log2FC[,1:length(cond.Nums)])
     # clean up log2FC
@@ -1082,9 +1103,12 @@ If you are running test data to get ExCluster working, ignore this warning.")
             if (file.exists(paste(fullFilename,".txt",sep="")) == TRUE){
                 fullFilename <- paste(fullFilename,Sys.time(),sep="")
             }
-            write.table(final.log2FC,file=paste(fullFilename,".txt",sep=""),sep="\t",quote=FALSE,row.names=FALSE,col.names=TRUE)
+            write.table(final.log2FC,file=paste(fullFilename,".txt",sep=""),sep="\t",
+                        quote=FALSE,row.names=FALSE,col.names=TRUE)
         }else{
-            print("Error! You specified an out.Dir directory for ExCluster that could not be written to. Please provide a valid directory that ExCluster can write files to. ExCluster will finish running, however your file has not been written.")
+            print("Error! You specified an out.Dir directory for ExCluster that could not be written to.
+    Please provide a valid directory that ExCluster can write files to.
+    ExCluster will finish running, however your file has not been written.")
         }
     }
 
@@ -1100,14 +1124,18 @@ If you are running test data to get ExCluster working, ignore this warning.")
             }
             # make sure that FDR.cutoff is less than 0.2, or set it back to 0.05
             if (FDR.cutoff > 0.2){
-                warning(call="FDR.cutoff was assigned higher than 0.2, which is not allowed. Using FDR cutoffs above 20% generates unnecessarily high false discovery rates. Please set FDR.cutoff to less than or equal to 0.2 in the future.")
+                warning(call="FDR.cutoff was assigned higher than 0.2, which is not allowed.
+    Using FDR cutoffs above 20% generates unnecessarily high false discovery rates.
+    Defaulting to 0.05 FDR for this run of ExCluster().")
                 FDR.cutoff <- 0.05
             }
             # run plotting function
             plotExonlog2FC(results.Data=final.log2FC, out.Dir=out.Dir, FDR.cutoff=FDR.cutoff)
         }else{
-            print("Error! You specified that plot.Results=TRUE, but you did not specify an directory for output. out.Dir must be assigned if plot.Results = TRUE -- your exon log2FCs have not been plotted.")
-            print("However, if you have saved your ExCluster results to a variable or file, you may run the plotExClustResults function directly -- please consult the vignette.")
+            print("Error! You specified that plot.Results=TRUE, but you did not specify an directory for output.
+    out.Dir must be assigned if plot.Results = TRUE -- your exon log2FCs have not been plotted.")
+            print("However, if you have saved your ExCluster results to a variable or file,
+    you may run the plotExClustResults function directly -- please consult the vignette.")
         }
     }
     ### return final data frame resutls

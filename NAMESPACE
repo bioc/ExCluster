@@ -8,6 +8,7 @@ import('methods')
 import('grDevices')
 import('graphics')
 import('utils')
+importFrom('IRanges','IRanges')
 import('Rsubread')
 import('GenomicRanges')
 

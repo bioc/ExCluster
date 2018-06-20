@@ -25,7 +25,7 @@ ExClust_respath <- system.file("extdata","sub_ExClust_results.txt",
 ExClust_Results <- read.table(file=ExClust_respath,sep="\t",header=TRUE,
     row.names=1,stringsAsFactors=FALSE)
 # now we must specify a directory to write images to
-outDir <- paste(system.file(package="ExCluster"),"/extdata/Images/",sep="")
+outDir <- paste(tempdir(),"/Images/",sep="")
 # now we can run our exon log2FC plotting function
 plotExonlog2FC(results.Data=ExClust_Results, out.Dir=outDir)
 }

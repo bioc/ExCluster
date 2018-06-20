@@ -25,3 +25,10 @@ Changes in Version 0.99.6
 - Changed processCounts, which was incorrectly counting reads as stranded (is now set to unstranded)
 - Altered ExCluster null hypothesis simulations to run faster (about 4 times faster now)
 - Made numerous small changes to address the issues with first Bioconductor review
+
+Changes in Version 0.99.7
+- Fixed a number of bugs resulting from ExCluster() function code changes
+- Updated the Vignette to correctly reflect changes suggested from the Bioconductor review
+- Added several package imports to better keep track of global variables/functions
+- Reduced the lengths of code lines in a number of instances
+- Cleaned up error messages for ExCluster() function

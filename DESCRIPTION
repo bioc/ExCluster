@@ -19,7 +19,7 @@ Description: ExCluster flattens Ensembl and GENCODE GTF files into GFF files,
     differentially spliced gene, which helps scientists develop hypothesis and
     target differential splicing events for RT-qPCR validation in the wet lab.
 biocViews: DifferentialSplicing, RNASeq, Software
-Imports: stats, methods, grDevices, graphics, utils
+Imports: stats, methods, grDevices, graphics, utils, IRanges
 Depends: Rsubread, GenomicRanges
 License: GPL-3
 Encoding: UTF-8
