@@ -7,7 +7,8 @@ Counts reads per exon bin for each BAM file, using GFF exon annotations -- also 
 The processCounts function takes an input of BAM files, and counts reads per exon bin from GFF annotations. GFF annotations may be given either in the form of a data frame assigned to annot.GFF, or the path to a GFF file given to GFF.File. processCounts also requires sample names per BAM file, to unambiguously name the read count columns. Reads may be counted as pairs or individually for paired-end reads, by setting the pairedReads parameter to TRUE or FALSE.
 }
 \usage{
-processCounts(bam.Files,sample.Names,annot.GFF,GFF.File,pairedReads,out.File,temp.Dir=NULL,num.Cores=NULL)
+processCounts(bam.Files,sample.Names,annot.GFF,GFF.File,pairedReads,out.File,
+                temp.Dir=NULL,num.Cores=NULL)
 }
 \arguments{
   \item{bam.Files}{An array of full file paths, specifying BAM files from RNA-seq experiments for which exon bin reads will be counted. Each item in the array must specify a full file path to a unique BAM file -- duplicate BAM files are not allowed. This is a required input.

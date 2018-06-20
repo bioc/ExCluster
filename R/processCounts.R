@@ -1,4 +1,4 @@
-processCounts <- function(bam.Files=NULL,sample.Names=NULL,annot.GFF=NULL,GFF.File=NULL,pairedReads=FALSE,out.File=NULL, num.Cores=NULL, temp.Dir=NULL){
+processCounts <- function(bam.Files=NULL,sample.Names=NULL,annot.GFF=NULL,GFF.File=NULL,pairedReads=FALSE,out.File=NULL,  temp.Dir=NULL, num.Cores=NULL){
 
     ### make sure R doesn't add factors -- R creators never should have made this default = TRUE
     options(stringsAsFactors=FALSE)
