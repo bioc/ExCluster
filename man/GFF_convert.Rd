@@ -26,7 +26,8 @@ GFF <- GFF_convert(GTF.File=GTF_file)
 This function returns a GFF data frame, which contains non-overlapping exon bins, flattened from a GTF file. When the function GFF_convert is run, its results should usually be assigned to a variable name, such as 'GFF'.
 }
 \references{
-    Anders, S., Reyes, A., and Huber, W. (2012). Detecting differential usage of exons from RNA-seq data. Genome Research, 22(10):2008-17.
+Anders, S., Reyes, A., and Huber, W. (2012). Detecting differential usage of exons from RNA-seq data. Genome Research, 22(10):2008-17.
+Lawrence M, Huber W, Pag\`es H, Aboyoun P, Carlson M, et al. (2013) Software for Computing and Annotating Genomic Ranges. PLoS Comput Biol 9(8): e1003118.doi:10.1371/journal.pcbi.1003118
 }
 \author{
 R. Matthew Tanner

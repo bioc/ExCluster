@@ -31,6 +31,64 @@ Alternatively, you can assign the BAM file names as a character vector to the ba
              Please ensure the lengths of bam.Files and sample.Names variables are the same.")
     }
 
+
+    ########################################## Library size Normalization Function ##########################################
+
+    ## columns must be "conditions" and rows must be features, i.e. genes or exons
+    # Read counts must be in normal space (i.e. not log2)
+    # any feature IDs (gene names, exon bins, etc.) must be in rownames, NOT data column
+    normalizeLibrarySizes <- function(raw.Data=NULL){
+        # prevent factors
+        options(stringsAsFactors=FALSE)
+        # duplicate raw data original data
+        original.Data <- raw.Data
+        # add 1 count and take the log2 of reads
+        raw.Data <- raw.Data+1
+        raw.Data <- log2(raw.Data)
+        # count columns and rows
+        NCols <- ncol(raw.Data)
+        NRows <- nrow(raw.Data)
+        # remove genes/exons which have fewer than 8 reads in any one condition
+        raw.Data <- raw.Data[which(apply(raw.Data,1,min) >= 3),]
+
+        # generate base mean
+        raw.Data$baseMean <- apply(raw.Data,1,mean)
+        # sizeFactors will be filled with % to adjust each column to baseMean
+        mean.Diff=NULL
+        # loop through conditions
+        for (i in seq(NCols)){
+            # difference between column expression & baseMean
+            expr.Diff <- raw.Data[,i] - raw.Data$baseMean
+            # now make a matrix to compute Lower & Upper percentages for shorth window
+            Quant <- matrix(0,nrow=31,ncol=3)
+            for (n in seq(31)){
+                # Lower percentile of shorth window
+                Lower <- 0.09 + n*0.01
+                # Upper percentile of shorth window
+                Upper <- Lower+0.5
+                # Now compute quantile values for these percentile values & add them to Quant
+                Quant[n,1:2] <- quantile(expr.Diff, c(Lower, Upper))
+                # Compute the size of the shorth quantile window
+                Quant[n,3] <- Quant[n,2] - Quant[n,1]
+            }
+            # Find the smallest shorth quantile window index
+            minShorthIndex <- match(min(Quant[,3]),Quant[,3])
+            # Now grab the shorth quantile data from that index
+            Shorth <- Quant[minShorthIndex,c(1:2)]
+            # Calculate the mean difference in log2 space between this raw.Data column & baseMean
+            mean.Diff[i] <- 2^(mean(expr.Diff[which(expr.Diff >= Shorth[1] & expr.Diff <= Shorth[2])]))
+        }
+        ## now adjust raw.Data based on the sizeFactors we have generated
+        adjusted.Data <- t(t(original.Data)/mean.Diff)
+        # add row and column names
+        rownames(adjusted.Data) <- rownames(original.Data)
+        colnames(adjusted.Data) <- colnames(original.Data)[1:NCols]
+        # now return output
+        return(adjusted.Data)
+    }
+
+    ########################################## Read counts with Rsubread ##########################################
+
     # check to make sure either the GFF data is present, or a GFF file path is given.
     if(is.null(annot.GFF) == TRUE){
         if (is.null(GFF.File) == FALSE){
@@ -48,12 +106,6 @@ One of annot.GFF or GFF.File must be specified when running processCounts().
     Alternatively, you can give the annot.GFF argument a GFF data frame from the GFF_convert function, such as: annot.GFF = GFF")
         }
     }
-
-    # geometric mean function
-    gm_mean = function(x, na.rm=TRUE){
-        exp(sum(log(x[x > 0]), na.rm=na.rm) / length(x))
-    }
-
     ### Convert GFF annotations to SAF
     SAF.annot <- data.frame(annot.GFF$V2,annot.GFF$V1,annot.GFF$V4,annot.GFF$V5,annot.GFF$V7)
     colnames(SAF.annot) <- c("GeneID","Chr","Start","End","Strand")
@@ -100,98 +152,35 @@ One of annot.GFF or GFF.File must be specified when running processCounts().
     DataTable <- data.frame(fC$counts)
     colnames(DataTable) <- c(sample.Names)
 
-    NRows <- nrow(DataTable)
-    NCols <- ncol(DataTable)
+    ########################################## Now normalize read counts ##########################################
 
-    ### Save original table
-    OriginalTable <- DataTable
-
-    ### add 1 count to each exon and take the log2, also calculate the geometric baseMean
-    DataTable <- DataTable+1
-    DataTable <- log2(DataTable[,1:NCols])
-    DataTable$baseMean <- apply(DataTable[,1:NCols],1,gm_mean)
-
-    #### Remove exons which are not well expressed
-    DataTable <- DataTable[which(DataTable$baseMean >= 4),]
-    NRows <- nrow(DataTable)
-
-    Indices <- matrix(data=0,nrow=NRows,ncol=NCols)
-    rownames(Indices) <- rownames(DataTable)
-
-    ### Make sure we have at least 2000 expressed exon bins to normalize
-    if (NRows > 2000){
-        for (i in 1:NCols){
-            #working <- get(Condition[i])
-            a <- rep(0,NRows)
-            working <- cbind(DataTable,a)
-            working <- cbind(DataTable,foldChange=a)
-            working$foldChange <- DataTable[,i] - DataTable$baseMean
-            Quant <- matrix(0,nrow=41,ncol=3)
-            for (n in 1:41){
-                Lower <- 0.09 + n*0.01
-                Upper <- Lower+0.4
-                Quant[n,1:2] <- quantile(working$foldChange, c(Lower, Upper))
-                Quant[n,3] <- Quant[n,2] - Quant[n,1]
-            }
-            Minimum <- match(min(Quant[,3]),Quant[,3])
-            Shorth <- Quant[Minimum,]
-            Indices[which(working$foldChange >= Shorth[1] & working$foldChange <= Shorth[2]),i] <- 1
-
-            rm(working)
-            rm(a)
-            rm(Quant)
-        }
-
-        ### now add up the values in the 'Indices' dataframe, where 1 = within the shorth for that sample
-        ### rows with a sum of 6 had that exon within the shorth for every exon, indicating they are good 'control' exons
-        indicesSum <- apply(Indices,1,sum)
-        CommonData <- DataTable[which(indicesSum == ncol(Indices)),]
-        # if less than 500 exon bins, be more lenient
-        if (ncol(CommonData) < 500){
-            CommonData <- DataTable[which(indicesSum == ceiling(ncol(Indices))/2),]
-        }
-
-        sizeFactors <- matrix(nrow=1,ncol=NCols)
-
-        ### now restore original read counts to be adjusted in the new 'AdjustedData'
-        AdjustedData <- OriginalTable
-        rm(OriginalTable)
-        rm(DataTable)
-
-        for (i in 1:NCols){
-            templog2FC <- CommonData[,i] - CommonData$baseMean
-            sizeFactors[1,i] <- 2^(median(templog2FC))
-            AdjustedData[,i] <- AdjustedData[,i]/sizeFactors[1,i]
-        }
-
-        ### if we don't have > 1000 expressed exon bins, run simple normalization
-    }else{
-        # clean up
-        rm(DataTable)
+    # check if we have at least 1000 rows of data to normalize counts to
+    if (nrow(DataTable[which(apply(DataTable,1,min) >= 8),]) < 1000){
+        # warn the user that they didn't have a good amount of data if less than 1000 elibile features (i.e. exon bins)
+        warning(call="You had fewer than 1000 exon bins with RNA-seq reads counted into them across conditions.
+Please be aware that ExCluster expects whole transcriptome GFF and BAM files counted, not individual chromosome data.
+Without these full files, ExCluster cannot properly correct library sizes and tune statistics.
+    >> If you are simply testing an ExCluster example, please ignore this warning.")
 
         # simple library size normalization
-        sampleSums <- apply(OriginalTable,2,sum)
+        sampleSums <- apply(DataTable,2,sum)
+        # compute baseMean library size (across all conditions)
         sampleBaseMean <- mean(sampleSums)
+        # compute sizeFactor differences for each sample vs basemean
         sizeFactors <- sampleSums/sampleBaseMean
+        # now adjust DataTable based on these size factors
+        adjusted.Counts <- t(t(DataTable)/sizeFactors)
 
-        # make results AdjustedData table
-        AdjustedData <- OriginalTable
-        # clean up
-        rm(OriginalTable)
-        # divide reads by library sizeFactors
-        AdjustedData <- t(t(AdjustedData)/sizeFactors)
-
-        # warn the user that they didn't have a good amount of data
-        warning(call="You had fewer than 1000 exon bins with RNA-seq reads counted into them.
-Please be aware that ExCluster expects whole transcriptome GFF and BAM files counted.
-Without these full files, ExCluster cannot properly correct library sizes and tune statistics.
-    If you are simply testing an ExCluster example, please ignore this warning.")
+    }else{
+        adjusted.Counts <- normalizeLibrarySizes(DataTable)
     }
+
+    ########################################## Final processing & output  ##########################################
 
     if (is.null(out.File) == FALSE){
-         write.table(AdjustedData,file=out.File,sep="\t",row.names=TRUE,col.names=TRUE,quote=FALSE)
+         write.table(adjusted.Counts,file=out.File,sep="\t",row.names=TRUE,col.names=TRUE,quote=FALSE)
     }
-    return(AdjustedData)
+    return(adjusted.Counts)
 
     cat('',"processCounts function has completed.",sep="\n")
 }

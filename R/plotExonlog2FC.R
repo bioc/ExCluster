@@ -125,7 +125,7 @@ plotExonlog2FC <- function(results.Data=NULL, out.Dir=NULL, FDR.cutoff=0.05){
                 ExonStart <- 0
                 # Bar height
                 BH <- Maxlog2FC/60
-                for (j in 1:nrow(TempData)){
+                for (j in seq(nrow(TempData))){
                     rect(ExonStart, TempData$log2FC[j]-BH, ExonStart + TempData$Length[j],
                          TempData$log2FC[j]+BH, col = "red")
                     ErrorBar((ExonStart + (TempData$Length[j] / 2)),(TempData$log2FC[j]-sqrt(TempData$log2Var[j])),

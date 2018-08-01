@@ -32,3 +32,14 @@ Changes in Version 0.99.7
 - Added several package imports to better keep track of global variables/functions
 - Reduced the lengths of code lines in a number of instances
 - Cleaned up error messages for ExCluster() function
+
+Changes in Version 0.99.8
+- Fixed build check errors from 0.99.7
+
+Changes in Version 0.99.9
+- Added the function rtracklayerGTFtoGFF, which flattens GTF files imported by rtracklayer to GFF format
+- Added the function GRangesFromGFF, which converts GFF formatted data to GRanges format
+- Added the function GRangesFromExClustResults, which converts ExCluster function results to GRanges format
+- Removed repeated code from the GFF_convert function
+- Most functions now have checks to ensure GTF, GFF, and ExClustResults data is formatted correctly'
+- Made an improvement to the processCounts function, which handles some edge cases better (zero reads in some conditions)

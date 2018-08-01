@@ -50,8 +50,7 @@ ExClust_Results <- ExCluster(exonCounts=normCounts,cond.Nums=condNums,
 This is the main function of the ExCluster package, and returns a data frame of exon bin log2FCs, log2 read variances, exon clustering per gene, p-values, FDRs, and normalized exon counts. The results of the ExCluster function should typically be assigned to a variable, such as 'ExClustResults'.
 }
 \references{
-Charrad M., Ghazzali N., Boiteau V., Niknafs A. (2014). NbClust: An R Package for Determining
-the Relevant Number of Clusters in a Data Set. Journal of Statistical Software, 61(6), 1-36.
+Charrad M., Ghazzali N., Boiteau V., Niknafs A. (2014). NbClust: An R Package for Determining the Relevant Number of Clusters in a Data Set. Journal of Statistical Software, 61(6), 1-36.
 }
 \author{
 R. Matthew Tanner

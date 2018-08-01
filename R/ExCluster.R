@@ -87,7 +87,7 @@ For example, your argument when running ExCluster should look something like thi
         x=length(Mean1)
         ES_mat <- matrix(0,nrow=x,ncol=x)
         # fill in nth row and jth column data for ES difference matrix
-        for (n in 1:(x-1)){
+        for (n in seq(x-1)){
             for (j in (n+1):x){
                 ES_mat[n,j] <- Calc.effect.size(Mean1[n],Mean1[j],Var1[n],Var1[j])
                 ES_mat[j,n] <- ES_mat[n,j] * -1
@@ -98,7 +98,7 @@ For example, your argument when running ExCluster should look something like thi
 
     ### function to compute the distances between all  clusters (apply max to its output)
     Compare_HC_Distances <- function(NumClusters){
-        ES_Clust_Dist <- max(vapply(1:(NumClusters-1), FUN=function(z){
+        ES_Clust_Dist <- max(vapply(seq(NumClusters-1), FUN=function(z){
             obsDist <- mean(ES_Dists[HC_indices[[z]],-c(HC_indices[[z]])])
             return(obsDist)},FUN.VALUE = c(Res=0)))
         return(ES_Clust_Dist)
@@ -111,17 +111,22 @@ For example, your argument when running ExCluster should look something like thi
         Sim_log2FC <- matrix(NA,nrow=NumIterations,ncol=NumRows)
         Sim_log2var <- matrix(NA,nrow=NumIterations,ncol=NumRows)
 
-        for (l in 1:NumRows){
-            SimulatedVector1 <- abs(rnorm(n = NumIterations, sd=sqrt(log2Clusters$var1[rows[l]]),
+        for (l in seq(NumRows)){
+            # generate rnorm vector of random null hypothesis sampling
+            SimulatedMatrix1 <- abs(rnorm(n = NumIterations*(length(log2Indices1)), sd=sqrt(log2Clusters$var1[rows[l]]),
                                           mean=log2(((apply(log2Clusters[rows[l],c(log2Indices1,log2Indices2)],1,mean)*2)*Gene_R1)+1)))
-            SimulatedVector2 <- abs(rnorm(n = NumIterations, sd=sqrt(log2Clusters$var2[rows[l]]),
+            SimulatedMatrix2 <- abs(rnorm(n = NumIterations*(length(log2Indices2)), sd=sqrt(log2Clusters$var2[rows[l]]),
                                           mean=log2(((apply(log2Clusters[rows[l],c(log2Indices1,log2Indices2)],1,mean)*2)*Gene_R2)+1)))
+            # transform these vectors into matrices
+            SimulatedMatrix1 <- matrix(SimulatedMatrix1, nrow = NumIterations)
+            SimulatedMatrix2 <- matrix(SimulatedMatrix2, nrow = NumIterations)
 
-            Sim_log2FC[,l] <- SimulatedVector2 - SimulatedVector1
-            Sim_log2var[,l] <- log2Clusters$var[rows[l]]
+            # compute log2FC means and variances from above matrices
+            Sim_log2FC[,l] <- apply(SimulatedMatrix2,1,mean) - apply(SimulatedMatrix1,1,mean)
+            Sim_log2var[,l] <- apply(SimulatedMatrix2,1,var) + apply(SimulatedMatrix1,1,var)
         }
 
-        Nonparam_Clust_Dists <-vapply(1:NumIterations,Permuted_ES_nullhypo,Sim_log2FC=Sim_log2FC,
+        Nonparam_Clust_Dists <-vapply(seq(NumIterations),Permuted_ES_nullhypo,Sim_log2FC=Sim_log2FC,
                                       Sim_log2var=Sim_log2var, NumRows=NumRows,FUN.VALUE = c(Res=0))
         return(Nonparam_Clust_Dists)
     }
@@ -142,13 +147,13 @@ For example, your argument when running ExCluster should look something like thi
             ##cut tree
             HC_cutree <- cutree(HC,k=NumClusters)
             ## find row indices per cluster
-            HC_indices <- lapply(1:NumClusters,FUN=function(y){which(HC_cutree==y)})
+            HC_indices <- lapply(seq(NumClusters),FUN=function(y){which(HC_cutree==y)})
         }else{
-            HC_indices <- 1:NumRows
+            HC_indices <- seq(NumRows)
         }
 
         ### generate distance matrix from distance object
-        pES_Clust_Dist <- max(vapply(1:(NumClusters-1), FUN=function(z){
+        pES_Clust_Dist <- max(vapply(seq(NumClusters-1), FUN=function(z){
             pDist <- mean(pES_Dists[HC_indices[[z]],-c(HC_indices[[z]])])
             return(pDist)},FUN.VALUE = c(Res=0)))
         return(pES_Clust_Dist)
@@ -163,8 +168,8 @@ For example, your argument when running ExCluster should look something like thi
         k <- max(cl)
         centers <- matrix(nrow = k, ncol = ncol(x))
         {
-            for (i in 1:k) {
-                for (j in 1:ncol(x)) {
+            for (i in seq(k)) {
+                for (j in seq(ncol(x))) {
                     centers[i, j] <- mean(x[cl == i, j])
                 }
             }
@@ -183,22 +188,22 @@ For example, your argument when running ExCluster should look something like thi
         cluster.size <- numeric(0)
         variance.clusters <- matrix(0, ncol = ncol(x), nrow = k)
         var <- matrix(0, ncol = ncol(x), nrow = k)
-        for (u in 1:k) cluster.size[u] <- sum(cl == u)
-        for (u in 1:k) {
-            for (j in 1:ncol(x)) {
-                for (i in 1:n) {
+        for (u in seq(k)) cluster.size[u] <- sum(cl == u)
+        for (u in seq(k)) {
+            for (j in seq(ncol(x))) {
+                for (i in seq(n)) {
                     if (cl[i] == u)
                         variance.clusters[u, j] <- variance.clusters[u, j] + (x[i, j] - centers.matrix[u, j])^2
                 }
             }
         }
-        for (u in 1:k) {
-            for (j in 1:ncol(x)) variance.clusters[u, j] = variance.clusters[u, j]/cluster.size[u]
+        for (u in seq(k)) {
+            for (j in seq(ncol(x))) variance.clusters[u, j] = variance.clusters[u, j]/cluster.size[u]
         }
         variance.matrix <- numeric(0)
-        for (j in 1:ncol(x)) variance.matrix[j] = var(x[, j]) * (n - 1)/n
+        for (j in seq(ncol(x))) variance.matrix[j] = var(x[, j]) * (n - 1)/n
         Somme.variance.clusters <- 0
-        for (u in 1:k) Somme.variance.clusters <- Somme.variance.clusters +
+        for (u in seq(k)) Somme.variance.clusters <- Somme.variance.clusters +
                                                         sqrt((variance.clusters[u, ] %*% (variance.clusters[u, ])))
         stdev <- (1/k) * sqrt(Somme.variance.clusters)
         scat <- (1/k) * (Somme.variance.clusters/sqrt(variance.matrix %*% variance.matrix))
@@ -213,8 +218,8 @@ For example, your argument when running ExCluster should look something like thi
         Clust_Dists <- array()
         Dist_Counter <- 1
         MAX_cl <- max(cl)
-        for (m in 1:MAX_cl){
-            N <- 1:MAX_cl
+        for (m in seq(MAX_cl)){
+            N <- seq(MAX_cl)
             N <- N[-c(m)]
             for (n in N){
                 Clust_Dists[Dist_Counter] <- mean(unlist(x[which(cl%in%m),which(cl%in%n)]))
@@ -264,13 +269,13 @@ For example, your argument when running ExCluster should look something like thi
     EstNullHypo <- function(x){
         # number of p-values in every interval of 0.02
         NumEstNull <- array()
-        for (i in 1:28){
+        for (i in seq(28)){
             Lower <- (i)/400
             Upper <- (i+7)/400
             NumEstNull[i+1] <- length(x[which(x >= Lower & x < Upper)])
         }
         # check to see if p-values have hit a low plateau (null hypothesis)
-        for (i in 1:20){
+        for (i in seq(20)){
             # Check maximum number of pvals in the 4 below the current i
             NumBelow <- NumEstNull[(i+1):(i+5)]
             # Convert these to TRUE/FALSE
@@ -296,7 +301,7 @@ For example, your argument when running ExCluster should look something like thi
         PriorOdds <- y/z
 
         # now loop through pvalues
-        for (n in 1:length(x)){
+        for (n in seq(length(x))){
             # check to make sure that we aren't on the first value, and the previous value isn't FDR == 1
             if (n > 1 && FDRvalues[(n-1)] >= 0.99) {
                     FDRvalues[n] <- 1
@@ -304,7 +309,7 @@ For example, your argument when running ExCluster should look something like thi
                 ### now generate a null hypothesis 2 times to estimate the NumExp and Num Obs
                 NumExp <- NULL
                 NumObs <- NULL
-                for (h in 1:1){
+                for (h in seq(3)){
                     # generate pure null hypothesis distribution
                     NullHypo <- sort(runif(z,0,1))
                     # number of expected p-values based on the null hypothesis distribution
@@ -386,13 +391,13 @@ If your count data alternates condition columns, such as cond1, cond2, cond1, co
     ## Ensure that both conditions have at least 2 replicates provided, or ExCluster will not function.
     if (length(Indices1) == 1){
         stop(call = "You only provided biological replicate for your first condition.
-    ExCluster, unfortunately, requires at least 2 biological replicates per condition to function.
-    If this was a mistake, please re-enter your cond.Nums argument with at least 2 replicates per condition number.")
+ExCluster, unfortunately, requires at least 2 biological replicates per condition to function.
+If this was a mistake, please re-enter your cond.Nums argument with at least 2 replicates per condition number.")
     }
     if (length(Indices2) == 1){
         stop(call = "You only provided biological replicate for your second condition.
-    ExCluster, unfortunately, requires at least 2 biological replicates per condition to function.
-    If this was a mistake, please re-enter your cond.Nums argument with at least 2 replicates per condition number.")
+ExCluster, unfortunately, requires at least 2 biological replicates per condition to function.
+If this was a mistake, please re-enter your cond.Nums argument with at least 2 replicates per condition number.")
     }
 
     ## Grab number of replicates from Cond1 and Cond2
@@ -411,10 +416,62 @@ If your count data alternates condition columns, such as cond1, cond2, cond1, co
         if (ncol(annot.GFF) != 10){
             ### inform the user that the GFF file was not properly formatted
             stop(call="You did not enter a valid GFF annotation data frame or a proper path to your GFF file.
-    It is possible that your GFF file is not properly formatted with the expected 10 columns.
-    Please re-run GFF_convert and then re-assign either annot.GFF or GFF.File when calling ExCluster.
-    See the ExCluster manual and vignette for more information.")
+It is possible that your GFF file is not properly formatted with the expected 10 columns.
+Please re-run GFF_convert and then re-assign either annot.GFF or GFF.File when calling ExCluster.
+See the ExCluster manual and vignette for more information.")
         }
+    }
+
+
+    ######################### NOW VERIFY GFF FILE FORMAT INTEGRITY #########################
+
+    ### check to make sure that each element of column 3 in the GFF file begins with 'exonic_part'
+    exonic_part.Values <- unique(substr(annot.GFF[,3],1,11))
+    # if the length of this unique value is > 1, or the result does not == 'exonic_part', throw an error
+    if (length(exonic_part.Values) > 1){
+        stop(call = "Your GFF file did not have column 3 beginning with 'exonic_part' in all cases.
+Please ensure your GFF file is produced from the GFF_convert function, and read into R without row/column names.
+If this error persists, please re-produce your GFF file from a GTF file using GFF_convert.")
+    }
+
+    ### check to make sure columns 4 & 5 are numeric start/stops with positive differences only
+    # we do this by subtracting 'start' from 'stop' and making sure the math works, and minimum = 0
+    # test to see if the math will work (will only work if columns 4 & 5 are properly formatted)
+    coord.Diff <- try(as.numeric(annot.GFF[,5]) - as.numeric(annot.GFF[,4]),silent = TRUE)
+    # check to see if we have an error
+    if (substr(coord.Diff[1],1,5) == "Error"){
+        stop(call = "The start and stop columns (4 & 5) of your GFF file were not properly formatted.
+Please ensure your GFF annotations were produced from the GFF_convert function.
+If you are reading saved GFF annotations from a file, please ensure no row or column names were applied to the file.
+If this error persists, please re-produce your GFF file from a GTF file using GFF_convert.")
+        }
+    # if that did not fail, the code continues and we verify that all stop - start subtractions are >= 0
+    if (min(coord.Diff) < 0){
+        stop(call = "There were negative distances between your stop and start locations in your GFF file.
+Please ensure your GFF annotations were produced from the GFF_convert function.
+If you are reading saved GFF annotations from a file, please ensure no row or column names were applied to the file.
+Columns 4 & 5 of the GFF file format should contain start/stop locations with only numeric values throughout.
+If this error persists, please re-produce your GFF file from a GTF file using GFF_convert.")
+    }
+
+    ### check to make sure column 7 unique values have at least "+" or "-" (could be just one for test GFF files)
+    # unique values of column 7 in the GFF file
+    strand.Values <- unique(annot.GFF[,7])
+    # is "+" present? if true this will == 1, if false this will == 0
+    positive.Length <- length(which('+'%in%strand.Values))
+    # is "-" present? if true this will == 1, if false this will == 0
+    negative.Length <- length(which('-'%in%strand.Values))
+    # make sure there are no more than 2 unique values of column 7
+    if (length(strand.Values) > 2){
+        stop(call = "The strand column of your GFF file (column 7) had more than 2 unique values.
+This column should only have '+' and '-' values. Please ensure your GFF file is read into R without row/column names.
+If this error persists, please re-produce your GFF file from a GTF file using GFF_convert.")
+    }
+    # if the previous check passed, make sure at least one of '-' or '+' is present
+    if ((positive.Length + negative.Length) < 1){
+        stop(call = "The strand column of your GTF file (column 7) did not contain '+' or '-' values.
+This column should only have '+' and '-' values. Please ensure your GFF file is read into R without row/column names.
+If this error persists, please re-produce your GFF file from a GTF file using GFF_convert.")
     }
 
     ######################### NOW BEAT DATA INTO SHAPE FOR log2FC and annot.GFF #########################
@@ -511,7 +568,7 @@ Otherwise, please make sure the same GFF file used to count exon reads is provid
         # make newlog2FC list to dump results from CombineExons into
         temp_log2FC <- vector("list", 1)
 
-        for (i in 1:NROW_GFF){
+        for (i in seq(NROW_GFF)){
             nextValue <- min((i+1), NROW_GFF)
             ### check if we are on a new gene
             if ((IDs[i] != IDs[nextValue]) == TRUE | i == NROW_GFF){
@@ -548,7 +605,7 @@ Otherwise, please make sure the same GFF file used to count exon reads is provid
                         TempReads <- newlog2FC[newlog2Rows,,drop=FALSE]
                         ### Make a matrix that will represent the presence or absence of transcripts
                         TransMatrix <- data.frame(matrix(data=0,nrow=length(uExTrans),ncol=ncol(TempReads)))
-                        for (j in 1:length(uExTrans)){
+                        for (j in seq(length(uExTrans))){
                             uIndices <- which(ExTrans%in%uExTrans[j])
                             if (length(uIndices) > 1){
                                 TransMatrix[j,] <- apply(TempReads[uIndices,],2,sum)
@@ -599,7 +656,7 @@ Otherwise, please make sure the same GFF file used to count exon reads is provid
     cat("Pre-processing data ...","",sep="\n")
 
     ### now set up the log2Clusters data frame which will be used to run the analysis
-    log2Clusters <- newlog2FC[,1:4]
+    log2Clusters <- newlog2FC[,seq(4)]
 
     ### rename log2Clusters columns && set up additional columns
     colnames(log2Clusters) <- c("gene","type","log2FC","var")
@@ -622,7 +679,7 @@ Otherwise, please make sure the same GFF file used to count exon reads is provid
     # add in count data
     log2Clusters[,NCols:(NCols+ncol(newlog2FC)-1)] <- newlog2FC
     colnames(log2Clusters)[NCols:(NCols+ncol(newlog2FC)-1)] <-
-        c(paste("cond1_rep",1:length(Indices1),sep=""),paste("cond2_rep",1:length(Indices2),sep=""))
+        c(paste("cond1_rep",seq(length(Indices1)),sep=""),paste("cond2_rep",seq(length(Indices2)),sep=""))
     # Index which columns correspond to conditions 1 and 2 in the 'log2Clusters' data frame
     log2Indices1 <- grep("cond1_",colnames(log2Clusters))
     log2Indices2 <- grep("cond2_",colnames(log2Clusters))
@@ -646,7 +703,7 @@ Otherwise, please make sure the same GFF file used to count exon reads is provid
     RemovalIndices <- vector("list", 1)
 
     ### run loop to flag genes with fewer than 2 average reads in either condition 1 or condition 2
-    for (i in 1:nrow(log2Clusters)){
+    for (i in seq(nrow(log2Clusters))){
         nextValue <- min((i+1),nrow(log2Clusters))
         if ((log2IDs[i] != log2IDs[nextValue]) || i == nrow(log2Clusters)){
             # stop at the current gene
@@ -681,7 +738,7 @@ Otherwise, please make sure the same GFF file used to count exon reads is provid
     Counter <- 1
 
     ### Run indexing loop
-    for (i in 1:nrow(log2Clusters)){
+    for (i in seq(nrow(log2Clusters))){
         nextValue <- min((i+1),nrow(log2Clusters))
         if ((log2IDs[i] != log2IDs[nextValue]) || i == nrow(log2Clusters)){
             # stop = ith row
@@ -735,11 +792,11 @@ Otherwise, please make sure the same GFF file used to count exon reads is provid
     cat("Running main ExCluster module (very long) ...","",sep="\n")
 
     ## set up progress reporting on ExCluster
-    ProgressPoints <- round(length(Genes)*c((1:10)/10))
+    ProgressPoints <- round(length(Genes)*c((seq(10))/10))
     ProgressCounter <- 1
 
     ### loop through and hierarchically cluster all expressed genes with > 1 exon bin
-    for (i in 1:length(Genes)){
+    for (i in seq(length(Genes))){
         # display progress at every 10% of genes analyzed
         if (i == ProgressPoints[ProgressCounter]){
             cat(paste("ExCluster progress: ",(ProgressCounter*10),"%",sep=""),sep="\n")
@@ -770,7 +827,7 @@ Otherwise, please make sure the same GFF file used to count exon reads is provid
                 HC_cutree <- Cutree_SD.Index()
                 log2Clusters$clustnum[rows] <- HC_cutree
             }else{
-                log2Clusters$clustnum[rows] <- 1:length(rows)
+                log2Clusters$clustnum[rows] <- seq(length(rows))
             }
         }else{
             log2Clusters$clustnum[rows] <- 1
@@ -787,7 +844,7 @@ Otherwise, please make sure the same GFF file used to count exon reads is provid
             ##cut tree
             HC_cutree <- cutree(HC,k=NumClusters)
             ## find row indices per cluster
-            HC_indices <- lapply(1:NumClusters,FUN=Determine_HC_Distance)
+            HC_indices <- lapply(seq(NumClusters),FUN=Determine_HC_Distance)
             ## find the average euclidean distance between two most different clusters in real observed data
             Observed_clust_dist <- Compare_HC_Distances(NumClusters)
             # clean up
@@ -917,20 +974,20 @@ Otherwise, please make sure the same GFF file used to count exon reads is provid
         # estimate the number of null hypothesis genes
         NumNull <- length(which(Catch_PVals[,2] > pvalCutoff))
         # the estimated number of false positives in 'NumTrue'
-        NumFalsePos <- (length(which(Catch_PVals[,2] <= 0.1))-NumTrue)/((0.11-pvalCutoff)/pvalCutoff)
+        NumFalsePos <- (length(which(Catch_PVals[,2] <= 0.1))-NumTrue)/((0.10-pvalCutoff)/pvalCutoff)
         # now estimate the minimum p-value of the null hypothesis
-        minNullPVal <- gm_mean(vapply(1:100,function(x){
+        minNullPVal <- gm_mean(vapply(seq(100),function(x){
             # generate an initial uniform p-value distribution for the total NumNull
-            InitialNullPVals <- sort(runif(nrow(Catch_PVals),0,1))
+            InitialNullPVals <- sort(runif((NumNull+NumFalsePos),0,1))
             # now use this to estimate the minimum p-value of the null hypothesis distribution
-            InitialNullPVals[NumFalsePos+1]},FUN.VALUE = c(Res=0)))
+            return(InitialNullPVals[NumFalsePos+1])},FUN.VALUE = c(Res=0)))
 
         ### if we have > 0 NumTrue p-values
         if (NumTrue > 0){
             # Now give the null hypothesis p-values uniform distriubtions
             Catch_PVals[(NumTrue+1):(NumTrue+NumNull),2] <- sort(runif(n=NumNull,minNullPVal,1))
             # Now divide all true p-values by a factor based on the lowest null hypothesis value
-            Catch_PVals[1:(NumTrue),2] <- Catch_PVals[c(1:NumTrue),2]/(Catch_PVals[NumTrue,2]/minNullPVal)
+            Catch_PVals[seq(NumTrue),2] <- Catch_PVals[seq(NumTrue),2]/(Catch_PVals[NumTrue,2]/minNullPVal)
             # Now compute FDR values
             FDRs <- FDRcalc(Catch_PVals[,2],NumTrue,NumNull)
         }else{
@@ -964,7 +1021,7 @@ If you are running test data to get ExCluster working, ignore this warning.")
             # Now give the null hypothesis p-values uniform distriubtions
             Catch_PVals[(NumTrue+1):(NumTrue+NumNull),2] <- sort(runif(n=NumNull,minNullPVal,1))
             # Now divide all true p-values by a factor based on the lowest null hypothesis value
-            Catch_PVals[1:(NumTrue),2] <- Catch_PVals[c(1:NumTrue),2]/(Catch_PVals[NumTrue,2]/minNullPVal)
+            Catch_PVals[seq(NumTrue),2] <- Catch_PVals[seq(NumTrue),2]/(Catch_PVals[NumTrue,2]/minNullPVal)
             # Now compute FDR values
             FDRs <- p.adjust(p = Catch_PVals[,2],method="BH")
         }else{
@@ -1056,7 +1113,7 @@ If you are running test data to get ExCluster working, ignore this warning.")
                 # grab the exon bins from this gene
                 ExonBins <- TempData$Bin
                 # now loop through the exon bins in TempData & assign cluster numbers to log2FC
-                for (j in 1:length(ExonBins)){
+                for (j in seq(length(ExonBins))){
                     BinIndices <- which(log2FC$Bins[Start:Stop]%in%ExonBins[j])
                     log2FC$Cluster[Start:Stop][BinIndices] <- TempData$clustnum[j]
                 }
@@ -1083,7 +1140,7 @@ If you are running test data to get ExCluster working, ignore this warning.")
     colnames(final.log2FC) <- c("EnsG","Exon_bin","Gene_name","Cluster",
                                 "log2FC","log2Var","pval","FDR","Chr","Strand","Start","End")
     # re-add the read counts at the end of the dataframe
-    final.log2FC <- data.frame(final.log2FC,log2FC[,1:length(cond.Nums)])
+    final.log2FC <- data.frame(final.log2FC,log2FC[,seq(length(cond.Nums))])
     # clean up log2FC
     rm(log2FC)
 
