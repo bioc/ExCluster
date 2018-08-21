@@ -7,8 +7,8 @@ Counts reads per exon bin for each BAM file, using GFF exon annotations -- also 
 The processCounts function takes an input of BAM files, and counts reads per exon bin from GFF annotations. GFF annotations may be given either in the form of a data frame assigned to annot.GFF, or the path to a GFF file given to GFF.File. processCounts also requires sample names per BAM file, to unambiguously name the read count columns. Reads may be counted as pairs or individually for paired-end reads, by setting the pairedReads parameter to TRUE or FALSE.
 }
 \usage{
-processCounts(bam.Files,sample.Names,annot.GFF,GFF.File,pairedReads,out.File,
-                temp.Dir=NULL,num.Cores=NULL)
+processCounts(bam.Files,sample.Names,annot.GFF,GFF.File,pairedReads, stranded.Reads,
+                out.File,temp.Dir=NULL,num.Cores=NULL)
 }
 \arguments{
   \item{bam.Files}{An array of full file paths, specifying BAM files from RNA-seq experiments for which exon bin reads will be counted. Each item in the array must specify a full file path to a unique BAM file -- duplicate BAM files are not allowed. This is a required input.
@@ -20,6 +20,8 @@ processCounts(bam.Files,sample.Names,annot.GFF,GFF.File,pairedReads,out.File,
     \item{GFF.File}{If this argument is specified, it must be given a full file path to a GFF file, including file name and extension. For example, this may look like: /Users/username/path/to/file.gff This argument is not required, but either annot.GFF or GFF.File must be specified.
     }
     \item{pairedReads}{pairedReads should be assigned a value of either TRUE or FALSE, and functions as a logical operator to determine whether or not reads should be counted as pairs. For example, if you are counting reads from a BAM file with paired-end reads, you should set pairedReads=TRUE By default pairedReads is FALSE, and thus need not be set for single-end reads.
+    }
+    \item{stranded.Reads}{This argument should be given a logical TRUE/FALSE value, determining whether RNA-seq reads are stranded or unstranded. This argument is set to FALSE by default. If your RNA-seq reads are stranded, use stranded.Reads=TRUE. If you are unsure, either assume that reads are unstranded, or consult the sequencing facility from which you obtained your RNA-seq fastq files.
     }
     \item{out.File}{This argument should be given a variable with a string which contains the full file path to which you wish to write your normalized exon bin counts. For example, you could set outFile<-"/path/to/normCounts.txt", and run processCounts with out.File=outFile
     }
@@ -35,7 +37,7 @@ ExClust_Path <- system.file(package="ExCluster")
 bamFiles <- list.files(ExClust_Path,recursive=TRUE,pattern="*.bam",
     full.names=TRUE)
 # now grab the path to the sub-sampled example GFF file
-GFF_file <- system.file("extdata","sub_gen.v23.ExClust.gff",
+GFF_file <- system.file("extdata","sub_gen.v23.ExClust.gff3",
     package="ExCluster")
 # assign sample names (only 2 replicates per condition in this example)
 sampleNames <- c("iPSC_cond1_rep1","iPSC_cond1_rep2","iPSC_cond2_rep1",

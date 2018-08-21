@@ -37,7 +37,7 @@ countsPath<- system.file("extdata","normCounts.txt",package="ExCluster")
 normCounts <- read.table(file=countsPath,header=TRUE,row.names=1,
     stringsAsFactors=FALSE)
 # now grab the path to the sub-sampled example GFF file
-GFF_file <- system.file("extdata","sub_gen.v23.ExClust.gff",package="ExCluster")
+GFF_file <- system.file("extdata","sub_gen.v23.ExClust.gff3",package="ExCluster")
 # assign condition numbers to your samples (we have 4 samples, 2 replicates per condition)
 condNums <- c(1,1,2,2)
 # now we run ExCluster, assigning its output to the ExClustResults variable

@@ -3,8 +3,7 @@ export('processCounts')
 export('ExCluster')
 export('plotExonlog2FC')
 export('GRangesFromExClustResults')
-export('GRangesFromGFF')
-export('rtracklayerGTFtoGFF')
+
 # import packages
 import('stats')
 import('methods')

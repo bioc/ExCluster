@@ -43,3 +43,12 @@ Changes in Version 0.99.9
 - Removed repeated code from the GFF_convert function
 - Most functions now have checks to ensure GTF, GFF, and ExClustResults data is formatted correctly'
 - Made an improvement to the processCounts function, which handles some edge cases better (zero reads in some conditions)
+
+Changes in Version 0.99.10
+- The GFF_convert function now outputs GFF3 formatted annotations
+- Amended other functions (processCounts, ExCluster) to work on GFF3 formatted annotations
+- Changed the output of GFF_convert to be a GRanges object of said GFF3 annotations
+- Created a separate, internal, load_ExCluster_functions.R script to load helper functions
+- Removed many depenencies on variables outside the environment for said functions
+- Created a library of error messages in the ExCluster_errors.R script (internal)
+- Separated the large ExCluster function into ExCluster.R, ExClust_compute_stats.R, and ExClust_main_function.R

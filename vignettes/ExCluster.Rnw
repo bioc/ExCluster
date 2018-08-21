@@ -230,33 +230,11 @@ plotExonlog2FC(results.Data=ExClust_Results, out.Dir=outDir)
 @
 \end{scriptsize}
 
-\section{Using rtracklayer \& GRanges formatted data}
+\section{Formatting ExCluster results as a GRanges object}
 
 In addition to the above methods, users may also use GTF files imported by rtracklayer in conjuction with the rtracklayerGTFtoGFF function, to produce GFF flattened files. This function calls the GFF\_convert function from within itself, and must be given the results of an rtracklayer import() function.\\
 
-Users may also convert the results of GFF\_convert and ExCluster, both of which contain genomic coordinates, to GRanges objects. This may allow for easier manipulation of these datastructures outside of the standard ExCluster pipeline described in this vignette. Please note that the processCounts, ExCluster, and plotExonlog2FC functions do not accept GRanges objects, instead expecting data in the format previously described in this vignette. Any conversion to GRanges objects should be done outside of the standard ExCluster pipeline.\\
-
-GTF files imported with tracklayer may be converted to GFF format similar to the following example:\\
-
-\begin{scriptsize}
-<<>>=
-# load the sub-sampled GTF file path from the ExCluster package
-GTF_file <- system.file("extdata","sub_gen.v23.gtf", package = "ExCluster")
-# make an rtrack layer object from this GTF file
-rtrack_GTF <- rtracklayer::import(GTF_file)
-# now run rtracklayerGTFtoGFF, assigning the results to the GFF object
-# in this case we are not specifying GFF.File, and thus not saving the GFF file
-GFF <- rtracklayerGTFtoGFF(rtracklayer.GTF=rtrack_GTF)
-@
-\end{scriptsize}
-
-Converting GFF data to GRanges format can be done as follows:\\
-
-\begin{scriptsize}
-<<>>=
-GRanges.GFF <- GRangesFromGFF(annot.GFF=GFF)
-@
-\end{scriptsize}
+Users may convert the results ExCluster to a GRanges objects, as said results contain genomic coordinates for each exon bin. This may allow for easier manipulation of these datastructures outside of the standard ExCluster pipeline described in this vignette. Please note that the plotExonlog2FC function does not accept GRanges objects, instead expecting data in the format previously described in this vignette.\\
 
 Converting ExCluster results to GRanges format can be done as follows:\\
 \begin{scriptsize}

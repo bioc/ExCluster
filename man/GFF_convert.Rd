@@ -7,9 +7,11 @@ Flatten GTF files into GFF format
 The GFF_convert function takes a GTF file input and flattens in into a GFF file, which contains discrete, non-overlapping exon bin definitions. Transcripts per exon bin are annotated, and normal gene names are added, in addition the Ensembl IDs.
 }
 \usage{
-GFF_convert(GTF.File,GFF.File)
+GFF_convert(annot.GTF, GTF.File, GFF.File)
 }
 \arguments{
+  \item{annot.GTF}{This argument must be passed GTF file annotations, either in the form of an rtracklayer object from the rtracklayer import function, or a data table directly imported into R from a GTF file, using tab delimiters. The function will automatically detect the formatting of the file in these cases.
+  }
   \item{GTF.File}{A full file path, including file name & extension, to the GTF file which will be flattened. This parameter is required. An example file path for a GTF file would be: /Users/username/path/to/file.gtf
     }
     \item{GFF.File}{A full file path to which the flattened GFF file can be written. This argument is not required, although it is strongly recommended that GFF files be saved for future use. An example file path for a GFF file would be: /Users/username/path/to/file.gff
