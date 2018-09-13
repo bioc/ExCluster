@@ -54,12 +54,8 @@ processCounts <- function(bam.Files=NULL,sample.Names=NULL,annot.GFF=NULL,GFF.Fi
         stop(call=ExCluster_errors$GFF_missing_GFF3_fields)
     }
 
-    ### now reformat the GFF file
+    ### now reformat the GFF file if all the checks passed, to our internal format
     annot.GFF <- reformat_GFF3(annot.GFF)
-
-    ### Convert GFF annotations to SAF
-    SAF.annot <- data.frame(annot.GFF$V2,annot.GFF$V1,annot.GFF$V4,annot.GFF$V5,annot.GFF$V7)
-    colnames(SAF.annot) <- c("GeneID","Chr","Start","End","Strand")
 
     ### default nCores = 1 if not specified, or incorrectly specified
     nCores <- 1
@@ -94,35 +90,44 @@ processCounts <- function(bam.Files=NULL,sample.Names=NULL,annot.GFF=NULL,GFF.Fi
         stranded.Reads <- 1
     }
 
+    ### Convert GFF annotations to SAF
+    SAF.annot <- data.frame(annot.GFF$V2,annot.GFF$V1,annot.GFF$V4,annot.GFF$V5,annot.GFF$V7)
+    colnames(SAF.annot) <- c("GeneID","Chr","Start","End","Strand")
+
     ### Run featureCounts on BAM files
     ### The authors and original license holders of featureCounts and the Rsubread package make no warranty for its performance
     fC <- featureCounts(files = bam.Files, annot.ext = SAF.annot, isGTFAnnotationFile = FALSE, nthreads = nCores, tmpDir=tmpDir,
             requireBothEndsMapped = FALSE, allowMultiOverlap = TRUE, largestOverlap = FALSE, isPairedEnd = pairedReads,
             strandSpecific = stranded.Reads)
 
-    ### run ambiguous read removal if stranded.Reads == FALSE
-    if (stranded.Reads == 0){
-        # set ambiguous reads to zero if reads are unstranded
-        fC <- parseAmbiguousReads(read.Counts = fC, annot.GFF=annot.GFF)
-    }
-
-    cat('',"Running library size normalization...",'',sep="\n")
+    message('',"Running library size normalization...",'',sep="\n")
 
     ### clean up SAF.annot (not needed anymore)
     rm(SAF.annot)
 
+    ### change fC to data frame & add colnames
     DataTable <- data.frame(fC$counts)
     colnames(DataTable) <- c(sample.Names)
+
+    ### run ambiguous read removal if stranded.Reads == FALSE
+    if (stranded.Reads == 0){
+        # determine how many overlaps each exon bin has
+        overlap.GRanges <- parseAmbiguousReads(read.Counts = DataTable, annot.GFF=annot.GFF)
+        # set ambiguous reads to zero if reads are unstranded
+        if (is.null(overlap.GRanges) == FALSE){
+            DataTable[overlap.GRanges,] <- 0
+        }
+    }
 
     ########################################## Now normalize read counts ##########################################
 
     # check if we have at least 1000 rows of data to normalize counts to
-    if (nrow(DataTable[which(apply(DataTable,1,min) >= 8),]) < 1000){
+    if (nrow(DataTable[which(rowMins(as.matrix(DataTable)) >= 8),]) < 1000){
         # warn the user that they didn't have a good amount of data if less than 1000 elibile features (i.e. exon bins)
         warning(call = ExCluster_errors$low_exon_bin_count)
 
         # simple library size normalization
-        sampleSums <- apply(DataTable,2,sum)
+        sampleSums <- colSums2(as.matrix(DataTable))
         # compute baseMean library size (across all conditions)
         sampleBaseMean <- mean(sampleSums)
         # compute sizeFactor differences for each sample vs basemean
@@ -143,5 +148,5 @@ processCounts <- function(bam.Files=NULL,sample.Names=NULL,annot.GFF=NULL,GFF.Fi
 
     ### return counts and finish function
     return(adjusted.Counts)
-    cat('',"processCounts function has completed.",sep="\n")
+    message('',"processCounts function has completed.",sep="\n")
 }

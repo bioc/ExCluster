@@ -37,7 +37,7 @@ CollapseExons <- function(GR.data){
         indices.gtf <- as(findOverlaps(GR.gff, GR.gtf), "List")
         GFF.transcripts <- NULL
         for (n in seq(NRows)){
-            GFF.transcripts[n] <- paste(GR.gtf$tx_id[indices.gtf[[n]]],collapse='+')
+            GFF.transcripts[n] <- paste(GR.gtf$tx_id[indices.gtf[[n]]],collapse=',')
         }
         GFF.start <- start(GR.gff)
         GFF.end <- end(GR.gff)
@@ -132,6 +132,41 @@ reformat_GFF3 <- function(annot.GFF=NULL){
     return(annot.GFF)
 }
 
+parseAmbiguousReads <- function(read.Counts=NULL, annot.GFF=NULL){
+    ### parse improper use of function
+    if (is.null(annot.GFF) == TRUE){
+        stop(call="You are attempting to run parseAmiguousReads outside of processCounts.
+This function is designed to only be called internally by processCounts.
+If you are running processCounts and still receiving this message, try re-generating your GFF file.")
+    }
+    # means of each row of read counts
+    exon.Bin.Means <- rowMeans2(as.matrix(read.Counts))
+    # list of exon bin indices with > 5 read counts
+    expressed.Exon.Indices <- which(exon.Bin.Means > 1)
+    # grab the names of these exon bins
+    expressed.Exon.Bins <- rownames(read.Counts)[expressed.Exon.Indices]
+    # reduce GFF data based on these exon bin indices
+    temp.GFF <- annot.GFF[expressed.Exon.Indices,]
+    # generate GRanges
+    adjcount.GRanges <- GRanges(seqnames=temp.GFF$V1, ranges=IRanges(as.numeric(temp.GFF$V4),
+                                                                      as.numeric(temp.GFF$V5)))
+    rm(temp.GFF)
+    # count overlaps per feature
+    overlap.GRanges <- countOverlaps(adjcount.GRanges, adjcount.GRanges)
+    # now determine the number of exon bins with > 1 overlap (1 = with itself)
+    overlap.Bins <- which(overlap.GRanges > 1)
+
+    ### now check do we have overlaps?
+    if (length(overlap.Bins) > 0){
+        # map these overlap.GRanges back onto original data
+        original.GRanges <- which(rownames(read.Counts)%in%expressed.Exon.Bins[overlap.Bins])
+    }else{
+        original.GRanges <- NULL
+    }
+    # return
+    return(original.GRanges)
+}
+
 ### normalize library size function (data must be normal space, not log2)
 # any feature IDs (gene names, exon bins, etc.) must be in rownames, NOT data column
 normalizeLibrarySizes <- function(raw.Data=NULL){
@@ -146,10 +181,9 @@ normalizeLibrarySizes <- function(raw.Data=NULL){
     NCols <- ncol(raw.Data)
     NRows <- nrow(raw.Data)
     # remove genes/exons which have fewer than 8 reads (3 in log2 space) in any one condition
-    raw.Data <- raw.Data[which(apply(raw.Data,1,min) >= 3),]
-
+    raw.Data <- raw.Data[which(rowMins(as.matrix(raw.Data)) >= 3),]
     # generate base mean
-    raw.Data$baseMean <- apply(raw.Data,1,mean)
+    raw.Data$baseMean <- rowMeans2(as.matrix(raw.Data))
     # sizeFactors will be filled with % to adjust each column to baseMean
     mean.Diff=NULL
     # loop through conditions
@@ -164,7 +198,7 @@ normalizeLibrarySizes <- function(raw.Data=NULL){
             # Upper percentile of shorth window
             Upper <- Lower+0.5
             # Now compute quantile values for these percentile values & add them to Quant
-            Quant[n,1:2] <- quantile(expr.Diff, c(Lower, Upper))
+            Quant[n,seq(2)] <- quantile(expr.Diff, c(Lower, Upper))
             # Compute the size of the shorth quantile window
             Quant[n,3] <- Quant[n,2] - Quant[n,1]
         }
@@ -179,36 +213,25 @@ normalizeLibrarySizes <- function(raw.Data=NULL){
     adjusted.Data <- t(t(original.Data)/mean.Diff)
     # add row and column names
     rownames(adjusted.Data) <- rownames(original.Data)
-    colnames(adjusted.Data) <- colnames(original.Data)[1:NCols]
+    colnames(adjusted.Data) <- colnames(original.Data)[seq(NCols)]
     # now return output
     return(adjusted.Data)
 }
 
-parseAmbiguousReads <- function(read.Counts=NULL, annot.GFF=NULL){
-    ### parse improper use of function
-    if (is.null(annot.GFF) == TRUE){
-        stop(call="You are attempting to run parseAmiguousReads outside of processCounts.
-This function is designed to only be called internally by processCounts.
-If you are running processCounts and still receiving this message, try re-generating your GFF file.")
-    }
 
-    ### generate GRanges
-    adjcount.GRanges <- GRanges(seqnames=annot.GFF$V1, ranges=IRanges(as.numeric(annot.GFF$V4),
-                                                                      as.numeric(annot.GFF$V5)))
-    ### count overlaps per feature
-    overlap.GRanges <- countOverlaps(adjcount.GRanges, adjcount.GRanges)
-
-    ### set reads in overlapping exon bins from overlap.GRanges to 0, if any exist
-    if (max(overlap.GRanges) > 1){
-        read.Counts[which(overlap.GRanges > 1),] <- 0
-    }
-    return(read.Counts)
-}
 
 
 #####################################################################################################
 #######################################  ExCluster Functions  #######################################
 #####################################################################################################
+
+### function to parse numbers from Ensembl IDs
+parseGeneIDs <- function(gene.Annot=NULL){
+    gene.Annot <- gsub("\\:.*","", gene.Annot)
+    gene.Annot <- gsub("\\..*","", gene.Annot)
+    gene.Annot <- substr(gene.Annot,(nchar(gene.Annot[1]) - 9),nchar(gene.Annot[1]))
+    return(gene.Annot)
+}
 
 #### Geometric mean function
 gm_mean = function(x, na.rm=TRUE){
@@ -249,8 +272,8 @@ Compare_HC_Distances <- function(NumClusters=NULL, ES_Dists=NULL, HC_indices=NUL
 }
 
 
-Permuted_ES_nullhypo <- function(r, Sim_log2FC=NULL, Sim_log2var=NULL, NumRows=NULL, DISTANCE=NULL, LINKAGE=NULL,
-                                 NumClusters=NULL){
+Permuted_ES_nullhypo <- function(r, Sim_log2FC=NULL, Sim_log2var=NULL, NumRows=NULL,
+                                 DISTANCE=NULL, LINKAGE=NULL, NumClusters=NULL){
 
     pMean1 <- as.numeric(Sim_log2FC[r,])
     pVar1 <- as.numeric(Sim_log2var[r,])

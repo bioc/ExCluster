@@ -5,7 +5,7 @@ ExCluster <- function(exonCounts=NULL, cond.Nums=NULL, annot.GFF = NULL, GFF.Fil
     options(stringsAsFactors=FALSE)
 
     ### ExCluster progression message
-    cat("","Initializing ...",sep="\n")
+    message("","Initializing ...",sep="\n")
 
     ### check to make sure a normalized exon count matrix was provided as input
     if (is.null(exonCounts) == TRUE){
@@ -46,7 +46,7 @@ ExCluster <- function(exonCounts=NULL, cond.Nums=NULL, annot.GFF = NULL, GFF.Fil
     CheckDups <- duplicated(t(exonCounts))
     if (any(CheckDups) == TRUE){
         DupCols <- which(CheckDups == TRUE)
-        print(paste("Columns",DupCols,"were duplicated in your normalized exon count data.
+        message(paste("Columns",DupCols,"were duplicated in your normalized exon count data.
     Please re-check your BAM file names and re-run processCounts."))
         stop(call = ExCluster_errors$exon_read_counts_duplicated)
         }
@@ -68,7 +68,7 @@ ExCluster <- function(exonCounts=NULL, cond.Nums=NULL, annot.GFF = NULL, GFF.Fil
     #####################################################################################################
 
     ### ExCluster progression message
-    cat('','Reading in data ...','',sep="\n")
+    message('','Reading in data ...','',sep="\n")
 
     log2FC <- data.frame(exonCounts)
     rm(exonCounts)
@@ -169,14 +169,14 @@ ExCluster <- function(exonCounts=NULL, cond.Nums=NULL, annot.GFF = NULL, GFF.Fil
     log2FC$Bins <- log2Bins
 
     # compute means and variances for the log2FC data frame
-    log2FC$log2FC <- apply(log2(log2FC[,Indices2]+1),1,mean) -
-        apply(log2(log2FC[,Indices1]+1),1,mean)
-    log2FC$log2Variance <- apply(log2(log2FC[,Indices2]+1),1,var) +
-        apply(log2(log2FC[,Indices1]+1),1,var)
+    log2FC$log2FC <- rowMeans2(as.matrix(log2(log2FC[,Indices2]+1))) -
+        rowMeans2(as.matrix(log2(log2FC[,Indices1]+1)))
+    log2FC$log2Variance <- rowVars(as.matrix(log2(log2FC[,Indices2]+1))) +
+        rowVars(as.matrix(log2(log2FC[,Indices1]+1)))
 
     ### now we work on organizing the newlog2FC read count data
     # remove all exon bin rows with fewer than 2 max reads (log2 reads >= 1) across samples
-    newlog2FC <- newlog2FC[which(apply(newlog2FC,1,max) >= 1),]
+    newlog2FC <- newlog2FC[which(rowMaxs(as.matrix(newlog2FC)) >= 1),]
     # now add EnsID to remove duplicated rows
     newlog2FC$EnsID <- sub(":.*","",rownames(newlog2FC))
     # identify duplicated rows by condition means
@@ -192,25 +192,13 @@ ExCluster <- function(exonCounts=NULL, cond.Nums=NULL, annot.GFF = NULL, GFF.Fil
     newBins <- sub(".*:","",rownames(newlog2FC))
 
     # take Ensembl ID numbers for easy parsing of newlog2FC data
-    TempID <- rownames(newlog2FC)
-    TempID <- gsub("\\:.*","",TempID)
-    TempID <- gsub("\\..*","",TempID)
-    TempID <- substr(TempID,(nchar(TempID[1]) - 9),nchar(TempID[1]))
-    newIDs <- TempID
-    rm(TempID)
+    newIDs <- parseGeneIDs(gene.Annot =  rownames(newlog2FC))
 
     ### Add Ensembl ID column to annot.GFF data frame for later sorting
-    TempID <- annot.GFF[,2]
-    TempID <- gsub("\\:.*","",TempID)
-    TempID <- gsub("\\..*","",TempID)
-    TempID <- substr(TempID,(nchar(TempID[1]) - 9),nchar(TempID[1]))
-    annot.GFF$EnsID <- TempID
-    rm(TempID)
+    annot.GFF$EnsID <- parseGeneIDs(gene.Annot = annot.GFF[,2])
 
     ### remove ENSG00000 from ENSEMBL IDs to make them easier to sort (for looping through each unique ID)
-    IDs <- gsub("\\:.*","",rownames(log2FC))
-    IDs <- gsub("\\..*","",IDs)
-    IDs <- substr(IDs,(nchar(IDs[1])-9),nchar(IDs[1]))
+    IDs <- parseGeneIDs(gene.Annot = rownames(log2FC))
 
     ### Check to make that annot.GFF EnsID column and IDs vector are 100% identical
     EqualVectors <- all.equal(annot.GFF$EnsID,IDs)
@@ -222,7 +210,7 @@ ExCluster <- function(exonCounts=NULL, cond.Nums=NULL, annot.GFF = NULL, GFF.Fil
 
     if (CombineExons == TRUE){
         ### ExCluster progression message
-        cat("Combining common exons ...","",sep="\n")
+        message("Combining common exons ...","",sep="\n")
 
         # Count number of rows in annot.GFF
         NROW_GFF <- nrow(annot.GFF)
@@ -275,7 +263,7 @@ ExCluster <- function(exonCounts=NULL, cond.Nums=NULL, annot.GFF = NULL, GFF.Fil
                         for (j in seq(length(uExTrans))){
                             uIndices <- which(ExTrans%in%uExTrans[j])
                             if (length(uIndices) > 1){
-                                TransMatrix[j,] <- apply(TempReads[uIndices,],2,sum)
+                                TransMatrix[j,] <- colSums2(as.matrix(TempReads[uIndices,]))
                                 rownames(TransMatrix)[[j]] <- rownames(TempReads)[[uIndices[1]]]
                                 # match new bins onto original log2FC rows
                                 newBinIndices <- which(originalBins%in%newBins[uIndices])
@@ -328,7 +316,7 @@ ExCluster <- function(exonCounts=NULL, cond.Nums=NULL, annot.GFF = NULL, GFF.Fil
     ######################################################################################################
 
     ### ExCluster progression message
-    cat("Final ExCluster data organization & output ...","",sep="\n")
+    message("Final ExCluster data organization & output ...","",sep="\n")
 
     # set up statistics & cluster columns in log2FC
     log2FC$pval <- NA
@@ -336,26 +324,12 @@ ExCluster <- function(exonCounts=NULL, cond.Nums=NULL, annot.GFF = NULL, GFF.Fil
     log2FC$Cluster <- NA
 
     ### remove ENSG00000 from ENSEMBL IDs to make them easier to sort (for looping through each unique ID)
-    # do this to add an IDs column to log2FC
-    IDs <- gsub("\\:.*","",rownames(log2FC))
-    IDs <- gsub("\\..*","",IDs)
-    IDs <- substr(IDs,(nchar(IDs[1])-9),nchar(IDs[1]))
     # Now add an IDs column to the log2FC data frame
-    log2FC$IDs <- IDs
-
+    log2FC$IDs <- parseGeneIDs(gene.Annot = rownames(log2FC))
     # now do the same for the IDs in the stats table
-    IDs <- gsub("\\:.*","",Stats_table[,1])
-    IDs <- gsub("\\..*","",IDs)
-    IDs <- substr(IDs,(nchar(IDs[1])-9),nchar(IDs[1]))
-    # Now add the IDs to Stats_table
-    Stats_table$IDs <- IDs
-
+    Stats_table$IDs <- parseGeneIDs(Stats_table[,1])
     # now do the same for IDs in the log2Clusters
-    IDs <- gsub("\\:.*","",log2Clusters$gene)
-    IDs <- gsub("\\..*","",IDs)
-    IDs <- substr(IDs,(nchar(IDs[1])-9),nchar(IDs[1]))
-    # Now add the IDs to log2Clusters
-    log2Clusters$IDs <- IDs
+    log2Clusters$IDs <- parseGeneIDs(log2Clusters$gene)
     # Also add the exon bin number to log2Clusters for matching
     log2Clusters$Bin <- gsub(pattern = '.*\\:',replacement = "",x = rownames(log2Clusters))
 
@@ -414,6 +388,7 @@ ExCluster <- function(exonCounts=NULL, cond.Nums=NULL, annot.GFF = NULL, GFF.Fil
             Start <- i
         }
     }
+
     # clean up
     rm(log2Clusters)
     rm(Stats_table)
@@ -477,6 +452,7 @@ ExCluster <- function(exonCounts=NULL, cond.Nums=NULL, annot.GFF = NULL, GFF.Fil
             warning(call = ExCluster_errors$plot_results_no_outDir)
         }
     }
+
     ### return final data frame resutls
     return(final.log2FC)
 }

@@ -215,7 +215,7 @@ condNums <- c(1,1,2,2)
 # now we run ExCluster, assigning its output to the ExClustResults variable
 # we are not writing out the ExClustResults table, nor are we plotting exons
 # we also use CombineExons=TRUE, since we are conducting a standard analysis
-ExClust_Results <- ExCluster(exonCounts=normCounts,cond.Nums=condNums,annot.GFF=GFF)
+ExClust_Results <- ExCluster(exonCounts=normCounts,cond.Nums=condNums,annot.GFF=GFF, CombineExons=FALSE)
 @
 \end{scriptsize}
 

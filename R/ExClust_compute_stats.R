@@ -9,7 +9,7 @@ ExClust_compute_stats <- function(gene.IDs=NULL, gene.PVals=NULL){
     GenePVals <- gene.PVals[pvalue.Indices]
 
     ### ExCluster progression message
-    cat("Running statistical tests ...","",sep="\n")
+    message("Running statistical tests ...","",sep="\n")
 
     ### data frame for testing p-values
     Catch_PVals <- data.frame(NamesGenePVals,GenePVals)
@@ -28,20 +28,24 @@ ExClust_compute_stats <- function(gene.IDs=NULL, gene.PVals=NULL){
         # estimate the number of null hypothesis genes
         NumNull <- length(which(Catch_PVals[,2] > pvalCutoff))
         # the estimated number of false positives in 'NumTrue'
-        NumFalsePos <- (length(which(Catch_PVals[,2] <= 0.1))-NumTrue)/((0.10-pvalCutoff)/pvalCutoff)
+        NumFalsePos <- (length(which(Catch_PVals[,2] > pvalCutoff & Catch_PVals[,2] <= 0.1)))/
+                        ((0.10-pvalCutoff)/pvalCutoff)
         # now estimate the minimum p-value of the null hypothesis
         minNullPVal <- gm_mean(vapply(seq(100),function(x){
             # generate an initial uniform p-value distribution for the total NumNull
             InitialNullPVals <- sort(runif((NumNull+NumFalsePos),0,1))
             # now use this to estimate the minimum p-value of the null hypothesis distribution
-            return(InitialNullPVals[NumFalsePos+1])},FUN.VALUE = c(Res=0)))
+            return(InitialNullPVals[NumFalsePos+1])
+        },
+        FUN.VALUE = c(Res=0)))
 
         ### if we have > 0 NumTrue p-values
         if (NumTrue > 0){
             # Now give the null hypothesis p-values uniform distriubtions
-            Catch_PVals[seq((NumTrue+1),(NumTrue+NumNull)),2] <- sort(runif(n=NumNull,minNullPVal,1))
+            Catch_PVals[seq((NumTrue+1),(NumTrue+NumNull)),2] <- sort(runif(n=NumNull,0,1))
             # Now divide all true p-values by a factor based on the lowest null hypothesis value
-            Catch_PVals[seq(NumTrue),2] <- Catch_PVals[seq(NumTrue),2]/(Catch_PVals[NumTrue,2]/minNullPVal)
+            Catch_PVals[seq(NumTrue),2] <- Catch_PVals[seq(NumTrue),2]/
+                                            (Catch_PVals[NumTrue,2]/Catch_PVals[(NumTrue+1),2])
             # Now compute FDR values
             FDRs <- FDRcalc(Catch_PVals[,2],NumTrue,NumNull)
         }else{

@@ -52,3 +52,10 @@ Changes in Version 0.99.10
 - Removed many depenencies on variables outside the environment for said functions
 - Created a library of error messages in the ExCluster_errors.R script (internal)
 - Separated the large ExCluster function into ExCluster.R, ExClust_compute_stats.R, and ExClust_main_function.R
+
+Changes in Version 0.99.11
+- Removed some duplicated code (stripping ID numbers, computing p-values)
+- removed several instances of cat() and print() and replaced them with message()
+- changed apply() code to use matrixStats instead, which is up to 500 times faster (Thanks Lori!)
+- this previous change sped the algorithm up from 1 hour+ to only ~ 20 minute runtime
+- changed the test dataset so one of the genes has a p-value < 0.05 and plots results

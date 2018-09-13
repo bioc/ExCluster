@@ -81,7 +81,7 @@ Please ensure you are passing the ExCluster main function results table directly
                                       Gene_name=results.ExClust$Gene_name, Cluster=results.ExClust$Cluster,
                                       log2FC=results.ExClust$log2FC, log2Var=results.ExClust$log2Var,
                                       pval=results.ExClust$pval, FDR=results.ExClust$FDR,
-                                      counts=results.ExClust[,c(13:ncol(results.ExClust))])
+                                      counts=results.ExClust[,seq(13,ncol(results.ExClust))])
 
     # export this GRanges object & end function
     return(ExClustResults.GRanges)

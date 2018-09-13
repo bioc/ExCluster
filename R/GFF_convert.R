@@ -82,7 +82,7 @@ GFF_convert <- function(annot.GTF=NULL, GTF.File=NULL,GFF.File=NULL){
 
     ### lastly, check to make sure transcript_id and gene_id values are present in GTF metadata column 9
     # grab 1st 25 rows -- sufficient for testing purposes
-    metacol.Values <- gtf.data[1:25,9]
+    metacol.Values <- gtf.data[seq(1,25),9]
     # check the number of rows (if any) 'gene_id' is present in for this metadata column
     gene_id.Length <- length(grep("gene_id",metacol.Values))
     # check the number of rows (if any) 'transcript_id' is present in for this metadata column
@@ -112,7 +112,7 @@ GFF_convert <- function(annot.GTF=NULL, GTF.File=NULL,GFF.File=NULL){
     # now loop through each gene in the GeneHash table & collapse exon bins with an lapply function
     for (x in seq(nrow(GeneHash))){
         # subset the current gene data
-        temp.data <- gtf.data[c(GeneHash[x,2]:GeneHash[x,3]),]
+        temp.data <- gtf.data[seq(GeneHash[x,2],GeneHash[x,3]),]
         # collapse exon bins for this gene
         exons.collapsed <- CollapseExons(temp.data)
         # exon bin numbers for the current gene (1:n for +ve strand by default, n:1 for -ve strand)
@@ -157,8 +157,10 @@ GFF_convert <- function(annot.GTF=NULL, GTF.File=NULL,GFF.File=NULL){
     gff.data <- data.frame(do.call(rbind,gff.data))
     # change filenames to arbitrary V1, V2, etc. (necessary for next step in read counting)
     colnames(gff.data) <- c("V1","V2","V3","V4","V5","V6","V7","V8","V9")
+    # parse out IDs from the GFF data
+    #gff3.IDs <- gsub(".*ID=(.*?);.*", "\\1", gff.data[,9])
     # sort on position and then chromsome
-    gff.data <- gff.data[order(gff.data[,1],as.numeric(as.character(gff.data[,4])),gff.data[,7]),]
+    #gff.data <- gff.data[order(gff.data[,1],gff3.IDs),]
 
     ### if the GFF outpath was specified, AND the filepath is writeable, write out the file
     # check if file path is writeable
