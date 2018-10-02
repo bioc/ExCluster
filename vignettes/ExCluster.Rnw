@@ -22,7 +22,7 @@
 % add title
 \title{ExCluster package: Robust detection of differentially spliced genes in RNA-seq data}
 \author{R. Matthew Tanner, William L. Stanford, and Theodore J. Perkins}
-\date{1 August 2018}
+\date{2 October 2018}
 \maketitle
 \tableofcontents
 
@@ -53,32 +53,33 @@ We now have our GFF annotation data frame written out, and stored in the 'GFF' v
 \R{> sampleNames <- c("hESC\_cond1\_rep1", "hESC\_cond1\_rep2", "hESC\_cond1\_rep3",}\\
 \indent\R{"iPSC\_cond2\_rep1", "iPSC\_cond2\_rep2", "iPSC\_cond2\_rep3")}\\
 \R{> normCounts <- processCounts(bam.Files=bamFiles, sample.Names=sampleNames,}\\
-\indent\R{annot.GFF=GFF, pairedReads=TRUE)}\\
+\indent\R{annot.GFF=GFF, paired.Reads=TRUE)}\\
 
-Note: if you are counting paired-end reads, we use pairedReads=TRUE. If some or all of your samples are single-end, use pairedReads=FALSE (default if unset is FALSE). \R{processCounts} counts reads per exon bin from each BAM file and normalizes them for library size differences -- we assign this output to the normCounts variable.\\
+Note: if you are counting paired-end reads, we use paired.Reads=TRUE. If some or all of your samples are single-end, use paired.Reads=FALSE (default if unset is FALSE). \R{processCounts} counts reads per exon bin from each BAM file and normalizes them for library size differences -- we assign this output to the normCounts variable.\\
 
 Now we can set up to run \R{ExCluster}, which requires condition numbers, and we should give it an outDir and fileName to write files to. We also want to plot our significant results, so we use plot.Results=TRUE. We do all of this as follows:\\
 
 \noindent\R{> condNums <- c(1,1,1,2,2,2)}\\
 \R{> outDir <- "/path/to/ExClustResults/"}\\
 \R{> fileName <- "hESC\_vs\_iPSC\_ExClust\_Results"}\\
-\R{> ExClustResults <- ExCluster(exonCounts=normCounts, cond.Nums=condNums,}\\
+\R{> ExClustResults <- ExCluster(exon.Counts=normCounts, cond.Nums=condNums,}\\
 \indent\R{annot.GFF=GFF, out.Dir=outDir, result.Filename=fileName, }\\
-\indent\R{CombineExons=TRUE, plot.Results=TRUE)}\\
+\indent\R{combine.Exons=TRUE, plot.Results=TRUE)}\\
 
 This will run for several hours, and will output the results to the ExClustResults variable, as well as write those same results to outDir/hESC\_vs\_iPSC\_ExClust\_Results.txt. Additionally, all significantly differentially expressed genes will have their exon bin log2FC means and variances plotted in a sub-folder of outDir.\\
 
-The only additional note is the CombineExons=TRUE argument. Some exons are co-expressed always within a given gene, and can therefore be combined into a 'super-exon'. This increases the power of ExCluster and reduces computation time greatly. However, it may miss aberrant splicing events. If you suspect abberant splicing, you can use CombineExons=FALSE (also FALSE by default if unset), and run the longer mult-hour ExCluster analysis.\\
+The only additional note is the combine.Exons=TRUE argument. Some exons are co-expressed always within a given gene, and can therefore be combined into a 'super-exon'. This increases the power of ExCluster and reduces computation time greatly. However, it may miss aberrant splicing events. If you suspect abberant splicing, you can use combine.Exons=FALSE (also FALSE by default if unset), and run the longer mult-hour ExCluster analysis.\\
 
 \noindent This concludes the quick run explanation.
 
 \section{Detailed ExCluster pipeline explanation}
 This Vignette assumes that you have successfully installed ExCluster in R, using Bioconductor. If you have not yet installed ExCluster with Bioconductor, please try to run the following:\\
 
-\noindent\R{> source("https://bioconductor.org/biocLite.R")}\\
-\R{> biocLite("ExCluster")}\\
+\noindent\R{> chooseCRANmirror()}\\
+\R {> install.packages("BiocManager")}\\
+\R{> BiocManager::install("ExCluster")}\\
 
-If you have trouble installing ExCluster, please check that bioconductor installs properly and loads other packages. If only ExCluster has issues, please contact the package maintainer. Please also remember that ExCluster will not install properly on Windows, as it relies on the Rsubread package.\\
+Please note that BiocManager (and ExCluster) will require R 3.5.1 or newer. If you have trouble downloading the BiocManger package, try selecting a different mirror or contact Bioconductor. If only ExCluster has issues, please contact the package maintainer. Please also remember that ExCluster will not install properly on Windows, as it relies on the Rsubread package.\\
 
 \noindent With ExCluster installed, we must now load the R package as follows:\\
 
@@ -122,12 +123,12 @@ With your BAMfiles correctly specified, we must now assign sample names to each 
 
 This naming convention is helpful, because it clearly indicates both the name of the condition, and which condition is which number (which determines the direction of exon fold changes). It also unambiguously identifies replicates. Again, we must verify that this order of sample names matches the order of the bamFiles array, or we will have improperly named samples and thus an improper analysis.\\
 
-With our setup complete, we can now run the \R{processCounts} function -- let us assume we are counting paired-end read data, so we also specify pairedReads=TRUE:\\
+With our setup complete, we can now run the \R{processCounts} function -- let us assume we are counting paired-end read data, so we also specify paired.Reads=TRUE:\\
 
 \noindent\R{> normCounts <- processCounts(bam.Files=bamFiles, }\\
-\indent\R{sample.Names=sampleNames, annot.GFF=GFF, pairedReads=TRUE)}\\
+\indent\R{sample.Names=sampleNames, annot.GFF=GFF, paired.Reads=TRUE)}\\
 
-Again, you will notice that we specified the pairedReads=TRUE argument, which is important when conducting ExCluster analyses on paired-end data. Unfortunately, ExCluster cannot currently accomodate mixed sample types. In other words, if some of your BAM files are paired-end, and some are single-end, we cannot specify different counting types. If some or all of your samples are single-end, you can set the pairedReads=FALSE argument. This is OK, as processCounts also normalizes library sizes, which should factor out much of the library size differences between the paired-end and single-end data.\\
+Again, you will notice that we specified the paired.Reads=TRUE argument, which is important when conducting ExCluster analyses on paired-end data. Unfortunately, ExCluster cannot currently accomodate mixed sample types. In other words, if some of your BAM files are paired-end, and some are single-end, we cannot specify different counting types. If some or all of your samples are single-end, you can set the paired.Reads=FALSE argument. This is OK, as processCounts also normalizes library sizes, which should factor out much of the library size differences between the paired-end and single-end data.\\
 
 The result of the above R command should give you a library size normalized exon bin count matrix, which is stored in the normCounts variable. To check this data frame, you should use ncols() and nrows() and have a number of columns equal to your number of BAM files, and roughly 500-600 thousand rows for human data. You should also sum your columns with apply(), and see millions of reads per column. These checks can be checked as follows:\\
 
@@ -150,13 +151,13 @@ If you have more than two conditions, please only run \R{ExCluster} with 2 condi
 
 Note, when you specify the fileName variable string, you need not include the file extension. By default, \R{ExCluster} will add '.txt' as a file extension, and write a tab delimited file. We can now run the \R{ExCluster} function as follows, assigning the ExCluster results to the ExClustResults variable:\\
 
-\noindent\R{> ExClustResults <- ExCluster(exonCounts=normCounts, cond.Nums=condNums,}\\
+\noindent\R{> ExClustResults <- ExCluster(exon.Counts=normCounts, cond.Nums=condNums,}\\
 \indent\R{annot.GFF=GFF, out.Dir=outDir, result.Filename=fileName,}\\
-\indent\R{CombineExons=TRUE, plot.Results=TRUE)}\\
+\indent\R{combine.Exons=TRUE, plot.Results=TRUE)}\\
 
-You will notice that we specified two extra parameters: CombineExons and plot.Results. Both arguments must be set as logical TRUE or FALSE values. Anything else will likely throw an error, and ExCluster may fail. If they are not set when running \R{ExCluster}, both CombineExons and plot.Resuts default to FALSE.\\
+You will notice that we specified two extra parameters: combine.Exons and plot.Results. Both arguments must be set as logical TRUE or FALSE values. Anything else will likely throw an error, and ExCluster may fail. If they are not set when running \R{ExCluster}, both combine.Exons and plot.Resuts default to FALSE.\\
 
-Very briefly, some exons are always co-expressed together in transcripts. These exons can therefore be combined into 'super-exons', based on GFF transcript definitions. This increases the read depth of these exons and reduces their variance, giving more powerful statistical resolution. It also decreases the number of exons bins analyzed per gene, which greatly cuts down on computation time. HOWEVER, this may cause aberrant splicing events to become missed. If you suspect aberrant splicing may occur in your biological paradigm, MAKE SURE CombineExons=FALSE! However, if you are conducting a standard analysis where no aberrant splicing should occur, CombineExons=TRUE will result in greater power and faster computation completion.\\
+Very briefly, some exons are always co-expressed together in transcripts. These exons can therefore be combined into 'super-exons', based on GFF transcript definitions. This increases the read depth of these exons and reduces their variance, giving more powerful statistical resolution. It also decreases the number of exons bins analyzed per gene, which greatly cuts down on computation time. HOWEVER, this may cause aberrant splicing events to become missed. If you suspect aberrant splicing may occur in your biological paradigm, MAKE SURE combine.Exons=FALSE! However, if you are conducting a standard analysis where no aberrant splicing should occur, combine.Exons=TRUE will result in greater power and faster computation completion.\\
 
 The \R{plotExonlog2FC} function may be called from within \R{ExCluster} to save extra lines of commands to the pipeline -- this is done by setting plot.Results=TRUE. Here, all genes equal to or less than an FDR cutoff will be called significant, and plotted in a sub-folder of the ExCluster results directory (outDir). By default the FDR.cutoff = 0.05, however you may specify as low as FDR.cutoff=0.01 and as high as FDR.cutoff=0.2 as an extra argument when running \R{ExCluster}. You may also run \R{plotExonlog2FC} on its own. See the manual for more details.\\
 
@@ -179,7 +180,7 @@ Assuming that you cannot have all of your BAM files exclusively within a given f
 \section{Running ExCluster "toy dataset" examples}
 The ExCluster package contains a small dataset for 3 genes, with 4 BAM files split evenly between two conditions. This toy dataset also includes sub-sampled GTF and GFF files, as well as various ExCluster results objects. If you are having trouble executing ExCluster functions, or simply wish to test the functionality of the package, you may use the following examples to test each function:\\
 
-First we test the GFF\_convert function, which takes a GTF file input and flattens it into a GFF file. We run the code as follows:\\
+First we test the GFF\_convert function, which takes a GTF file input and flattens it into a GFF3 file. We run the code as follows:\\
 
 \begin{scriptsize}
 <<>>=
@@ -201,8 +202,8 @@ ExClust_Path <- system.file(package="ExCluster")
 bamFiles <- list.files(ExClust_Path,recursive=TRUE,pattern="*.bam",full.names=TRUE)
 # assign sample names (only 2 replicates per condition in this example)
 sampleNames <- c("iPSC_cond1_rep1","iPSC_cond1_rep2","iPSC_cond2_rep1","iPSC_cond2_rep2")
-# now run processCounts, with pairedReads=TRUE because we are counting paired-end data
-normCounts <- processCounts(bam.Files=bamFiles, sample.Names=sampleNames, annot.GFF=GFF, pairedReads=TRUE)
+# now run processCounts, with paired.Reads=TRUE because we are counting paired-end data
+normCounts <- processCounts(bam.Files=bamFiles, sample.Names=sampleNames, annot.GFF=GFF, paired.Reads=TRUE)
 @
 \end{scriptsize}
 
@@ -214,8 +215,8 @@ The main function of the package, ExCluster, can be tested with the following co
 condNums <- c(1,1,2,2)
 # now we run ExCluster, assigning its output to the ExClustResults variable
 # we are not writing out the ExClustResults table, nor are we plotting exons
-# we also use CombineExons=TRUE, since we are conducting a standard analysis
-ExClust_Results <- ExCluster(exonCounts=normCounts,cond.Nums=condNums,annot.GFF=GFF, CombineExons=FALSE)
+# we also use combine.Exons=FALSE to discover one 'significant' gene for example plot purposes
+ExClust_Results <- ExCluster(exon.Counts=normCounts,cond.Nums=condNums,annot.GFF=GFF, combine.Exons=FALSE)
 @
 \end{scriptsize}
 
@@ -224,9 +225,10 @@ We can test the exon log2FC plotting function plotExonlog2FC as follows:\\
 \begin{scriptsize}
 <<>>=
 # now we must specify a directory to write images to
+# here we use tempdir, but you may substitute another folder path if you wish
 outDir <- paste(tempdir(),"/Images/",sep="")
 # now we can run our exon log2FC plotting function
-plotExonlog2FC(results.Data=ExClust_Results, out.Dir=outDir)
+plotExonlog2FC(results.Data=ExClust_Results, out.Dir=outDir, plot.Type="PNG")
 @
 \end{scriptsize}
 

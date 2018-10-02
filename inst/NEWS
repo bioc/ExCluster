@@ -59,3 +59,10 @@ Changes in Version 0.99.11
 - changed apply() code to use matrixStats instead, which is up to 500 times faster (Thanks Lori!)
 - this previous change sped the algorithm up from 1 hour+ to only ~ 20 minute runtime
 - changed the test dataset so one of the genes has a p-value < 0.05 and plots results
+
+Changes in Version 0.99.12
+- Loosened FDR calculations slightly (ExCluster was a bit too stringent)
+- Added plot.Type option to plotExonlog2FC function, which accepts "bitmap" and "PNG"
+- Bug-tested plot.Type so machines with at least Ghostscript or X11 forwarding will have minimal issues
+- Changed how files/folders are written & how write-permissions are detected, to avoid bugs
+- Updated the vignette to use BiocManager instead of biocLite

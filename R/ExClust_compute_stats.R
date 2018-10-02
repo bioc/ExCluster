@@ -22,22 +22,11 @@ ExClust_compute_stats <- function(gene.IDs=NULL, gene.PVals=NULL){
     if (nrow(Catch_PVals) >= 5000){
         ### normalize p-values
         # estimate the number of 'truly spliced genes'
-        pvalCutoff <- EstNullHypo(Catch_PVals[,2])
+        pvalCutoff <- EstNullHypo(Catch_PVals[,2])+0.005
         # estimate the number of truly spliced genes (may include some false positives)
         NumTrue <- length(which(Catch_PVals[,2] <= pvalCutoff))
         # estimate the number of null hypothesis genes
         NumNull <- length(which(Catch_PVals[,2] > pvalCutoff))
-        # the estimated number of false positives in 'NumTrue'
-        NumFalsePos <- (length(which(Catch_PVals[,2] > pvalCutoff & Catch_PVals[,2] <= 0.1)))/
-                        ((0.10-pvalCutoff)/pvalCutoff)
-        # now estimate the minimum p-value of the null hypothesis
-        minNullPVal <- gm_mean(vapply(seq(100),function(x){
-            # generate an initial uniform p-value distribution for the total NumNull
-            InitialNullPVals <- sort(runif((NumNull+NumFalsePos),0,1))
-            # now use this to estimate the minimum p-value of the null hypothesis distribution
-            return(InitialNullPVals[NumFalsePos+1])
-        },
-        FUN.VALUE = c(Res=0)))
 
         ### if we have > 0 NumTrue p-values
         if (NumTrue > 0){

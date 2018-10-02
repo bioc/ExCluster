@@ -7,7 +7,7 @@ The plotExonlog2FC function plots exon log2FC means and variances for significan
 This function takes an input of ExCluster's results dataframe, as well as a directory to write files to, and plots exon bin log2FC means and variances for each significantly differentially expressed gene. Significant genes are determined by applying an FDR cutoff to the ExCluster results. By default, FDR.cutoff=0.05, although this parameter may be set between 0.01 and 0.2.
 }
 \usage{
-plotExonlog2FC(results.Data, out.Dir, FDR.cutoff)
+plotExonlog2FC(results.Data, out.Dir, FDR.cutoff, plot.Type)
 }
 \arguments{
   \item{results.Data}{This argument should be assigned a data frame containing the results from an ExCluster analysis, obtained by running the function ExCluster. This argument is required to be set. Assuming ExCluster results are assigned to the variable clustResults, this parameter woud be set as follows: results.Data=clustResults
@@ -15,6 +15,8 @@ plotExonlog2FC(results.Data, out.Dir, FDR.cutoff)
     \item{out.Dir}{The outDir argument should be assigned a character string specifying a full folder path where exon bin images per gene may be written. To keep results coherent, this should be a sub-folder within the folder the original ExCluster results were written to. This directory need not exist, as R will recursively create it. However, this argument is required. For example, if ExCluster results were written to the folder /Users/username/Documents/RNA-seq/project_A/ then the folder the images should be something like: /Users/username/Documents/RNA-seq/project_A/exon_log2FC_images/
     }
     \item{FDR.cutoff}{The FDR.cutoff argument should be assigned a value between 0.01 and 0.2. Using FDR cutoffs outside these bounds is not recommended. This number determines which false discovery rate cutoff will be used to discover significant genes by ExCluster. This parameter is not required, and by default FDR.cutoff=0.05
+    }
+    \item{plot.Type}{The plot.Type function should be assigned values of either "bitmap" or "PNG". Both inputs will plot PNG images. Either Ghostscript or X11 forwarding is required for plotting images on various operating systems. Default = "bitmap"
     }
 }
 \examples{

@@ -1,21 +1,54 @@
-plotExonlog2FC <- function(results.Data=NULL, out.Dir=NULL, FDR.cutoff=0.05){
+plotExonlog2FC <- function(results.Data=NULL, out.Dir=NULL, FDR.cutoff=0.05, plot.Type="bitmap"){
 
     ### make sure R doesn't add factors -- R creators never should have made this default = TRUE
     options(stringsAsFactors=FALSE)
-
+    # check to make sure results.Data parameter is given as input
     if (is.null(results.Data) == TRUE){
         stop(call="You must assign the results.Data argument a variable containing the results of an ExCluster analysis.
     For example, if previous ExCluster results were assigned to clustResults, you would specify: results.Data=clustResults")
     }
-
+    # check to make sure out.Dir is specified
     if (is.null(out.Dir) == TRUE){
         stop(call="plotExClustResults requires a direcotry to write images to, but was not specified.
     Please specify the full file path to a folder to which exon log2FC plots may be written.")
     }else{
         # now that out.Dir is specified, make sure its parent directory exists
         if (dir.exists(out.Dir) == FALSE){
-            dir.create(out.Dir,recursive = TRUE)
+            # try to make out.Dir no matter what
+            try(dir.create(out.Dir, recursive=TRUE, showWarnings = FALSE), silent=TRUE)
         }
+    }
+
+    ### now make sure we can write to the out.Dir
+    WriteCheck <- file.access(out.Dir, mode=2)
+    if (WriteCheck != 0){
+        stop(call="ExCluster did not have write priveledges for the out.Dir you specified.
+             Please ensure you specify a valid directory that can be created and written to by R.")
+    }
+
+    ### now check bitmap and PNG settings for plot.Type
+    if (is.null(plot.Type) == TRUE){
+        plot.Type <- "bitmap"
+    }else if (plot.Type != "bitmap" && plot.Type != "PNG"){
+        plot.Type <- "bitmap"
+    }
+
+    ### now check that PNG and bitmap can be plotted
+    test.bitmap <- substr(testBMplot(out.Dir)[1],1,5)
+    test.PNG <- substr(testPNGplot(out.Dir)[1],1,5)
+    if (plot.Type == "bitmap"){
+        if (test.bitmap == "Error"){
+            plot.Type <- "PNG"
+        }
+    }else{
+        if (test.PNG == "Error"){
+            plot.Type <- "bitmap"
+        }
+    }
+
+    ### make sure either bitmap or PNG passed
+    if (test.bitmap == "Error" && test.PNG == "Error"){
+        stop(call = ExCluster_errors$plot_type_failure)
     }
 
     ############################# FUNCTIONS ###############################
@@ -112,8 +145,15 @@ plotExonlog2FC <- function(results.Data=NULL, out.Dir=NULL, FDR.cutoff=0.05){
                 MaxX <- sum(TempData$Length) + nrow(TempData) - 1
 
                 ### now set up png for plotting
-                bitmap(file=paste(out.Dir,"/",TargetGene,"_",TargetName,".png",sep=""), type="png16m",
-                       width=6,height=4,units="in",res = 400, taa=4,gaa=4)
+                # check to see if we are plotting bitmap or PNG
+                if (plot.Type == "bitmap"){
+                    bitmap(file=paste(out.Dir,"/",TargetGene,"_",TargetName,".png",sep=""), type="png16m",
+                           width=6,height=4,units="in",res = 400, taa=4,gaa=4)
+                }
+                if (plot.Type == "PNG"){
+                    png(filename = paste(out.Dir,"/",TargetGene,"_",TargetName,".png",sep=""),
+                        width=6,height=4,units="in",res = 400)
+                }
                 par(ps = 12, cex = 1, cex.main = 1,mar=(c(5, 5, 4, 2)+0.2))
                 plot(c(0,MaxX), c(-(Maxlog2FC),Maxlog2FC) , type= "n",
                      ylab = "log2 fold change (log2FC)",xlab = "nucleotide position (number of base pairs)",

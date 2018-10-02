@@ -1,4 +1,4 @@
-processCounts <- function(bam.Files=NULL,sample.Names=NULL,annot.GFF=NULL,GFF.File=NULL, pairedReads=FALSE,
+processCounts <- function(bam.Files=NULL,sample.Names=NULL,annot.GFF=NULL,GFF.File=NULL, paired.Reads=FALSE,
                           stranded.Reads=FALSE, out.File=NULL, temp.Dir=NULL, num.Cores=NULL){
 
     ### make sure R doesn't add factors -- R creators never should have made this default = TRUE
@@ -11,8 +11,8 @@ processCounts <- function(bam.Files=NULL,sample.Names=NULL,annot.GFF=NULL,GFF.Fi
     if(is.null(sample.Names) == TRUE){
         stop(call = ExCluster_errors$sample_name_argument_missing)
     }
-    # make sure that 'pairedReads' variable is logical
-    if(is.logical(pairedReads) == FALSE){
+    # make sure that 'paired.Reads' variable is logical
+    if(is.logical(paired.Reads) == FALSE){
         stop(call = ExCluster_errors$paired_reads_not_logical)
     }
     # Check to make sure the number of sample & sample names are the same
@@ -20,7 +20,7 @@ processCounts <- function(bam.Files=NULL,sample.Names=NULL,annot.GFF=NULL,GFF.Fi
         stop(call = ExCluster_errors$BAM_sample_length_unequal)
     }
 
-    ########################################## Read counts with Rsubread ##########################################
+    ########################## Read counts with Rsubread ##########################
 
     ### check to make sure either the GFF data is present, or a GFF file path is given.
     if(is.null(annot.GFF) == TRUE){
@@ -97,7 +97,7 @@ processCounts <- function(bam.Files=NULL,sample.Names=NULL,annot.GFF=NULL,GFF.Fi
     ### Run featureCounts on BAM files
     ### The authors and original license holders of featureCounts and the Rsubread package make no warranty for its performance
     fC <- featureCounts(files = bam.Files, annot.ext = SAF.annot, isGTFAnnotationFile = FALSE, nthreads = nCores, tmpDir=tmpDir,
-            requireBothEndsMapped = FALSE, allowMultiOverlap = TRUE, largestOverlap = FALSE, isPairedEnd = pairedReads,
+            requireBothEndsMapped = FALSE, allowMultiOverlap = TRUE, largestOverlap = FALSE, isPairedEnd = paired.Reads,
             strandSpecific = stranded.Reads)
 
     message('',"Running library size normalization...",'',sep="\n")
@@ -119,11 +119,12 @@ processCounts <- function(bam.Files=NULL,sample.Names=NULL,annot.GFF=NULL,GFF.Fi
         }
     }
 
-    ########################################## Now normalize read counts ##########################################
+    ######################## Now normalize read counts ########################
 
     # check if we have at least 1000 rows of data to normalize counts to
     if (nrow(DataTable[which(rowMins(as.matrix(DataTable)) >= 8),]) < 1000){
-        # warn the user that they didn't have a good amount of data if less than 1000 elibile features (i.e. exon bins)
+        # warn the user that they didn't have a good amount of data
+        # i.e. if less than 1000 elibile features (i.e. exon bins) were expressed
         warning(call = ExCluster_errors$low_exon_bin_count)
 
         # simple library size normalization
@@ -139,11 +140,15 @@ processCounts <- function(bam.Files=NULL,sample.Names=NULL,annot.GFF=NULL,GFF.Fi
         adjusted.Counts <- normalizeLibrarySizes(DataTable)
     }
 
-    ########################################## Final processing & output  ##########################################
+    ######################## Final processing & output ########################
 
     ### write output file if necessary
     if (is.null(out.File) == FALSE){
-         write.table(adjusted.Counts,file=out.File,sep="\t",row.names=TRUE,col.names=TRUE,quote=FALSE)
+        WriteCheck <- file.access(dirname(out.File), mode=2)
+        if (WriteCheck == 0){
+            write.table(adjusted.Counts,file=out.File,sep="\t",row.names=TRUE,
+                        col.names=TRUE,quote=FALSE)
+        }
     }
 
     ### return counts and finish function

@@ -188,9 +188,16 @@ If you are running test data to get ExCluster working, ignore this warning.",
     Using FDR cutoffs above 20% generates unnecessarily high false discovery rates.
     Defaulting to 0.05 FDR for this run of ExCluster().",
 
-    plot_results_no_outDir = "You specified that plot.Results=TRUE, but you did not specify an directory for output.
-out.Dir must be assigned if plot.Results = TRUE -- your exon log2FCs have not been plotted.
-However, if you have saved your ExCluster results to a variable or file,
-you may run the plotExClustResults function directly -- please consult the vignette."
+    plot_results_no_outDir = paste("You specified that plot.Results=TRUE, ",
+                "but out.Dir was not specified or could not be written to. ",
+                "out.Dir must be assigned a valid directory that can be created and/or written to. ",
+                "Your exon log2FCs have not been plotted, however, you may re-plot them ",
+                "with the plotExClustResults function -- this requires saved ExClust results. ",
+                "Please consult the vignette for more instructions.", sep=""),
+
+    plot_type_failure = paste("ExCluster was unable to plot either PNG or bitmap. ",
+                              "This error commonly occurs because your operating system ",
+                              "lacks both Ghostscript and X11 forwarding. Please ensure ",
+                              "R has access to either Ghostscrpit or X11 forwarding.",sep="")
 
 )

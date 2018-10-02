@@ -504,3 +504,24 @@ FDRcalc <- function(x,y,z){
     return(FDRvalues)
 }
 
+### function to check if we can plot a PNG
+testPNGplot <- function(test.Dir=NULL){
+    test.PNG <- try(
+        {  png(filename=paste(test.Dir,"/test.png",sep=""))
+            plot(c(1,2,3),c(1,2,3))
+            dev.off()
+            file.remove(paste(test.Dir,"/test.png",sep=""))}
+        , silent = TRUE)
+    return(test.PNG)
+}
+
+### function to check if we can plot a PNG
+testBMplot <- function(test.Dir=NULL){
+    test.BM <- try(
+        {  bitmap(file=paste(test.Dir,"/test.png",sep=""))
+            plot(c(1,2,3),c(1,2,3))
+            dev.off()
+            file.remove(paste(test.Dir,"/test.png",sep=""))}
+        , silent = TRUE)
+    return(test.BM)
+}

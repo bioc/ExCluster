@@ -1,5 +1,6 @@
-ExCluster <- function(exonCounts=NULL, cond.Nums=NULL, annot.GFF = NULL, GFF.File=NULL, out.Dir=NULL,
-                      result.Filename=NULL, CombineExons=TRUE,plot.Results=FALSE,FDR.cutoff=0.05){
+ExCluster <- function(exon.Counts=NULL, cond.Nums=NULL, annot.GFF = NULL, GFF.File=NULL,
+                      out.Dir=NULL, result.Filename=NULL, combine.Exons=TRUE,
+                      plot.Results=FALSE, FDR.cutoff=0.05){
 
     ### make sure R doesn't add factors -- R creators never should have made this default = TRUE
     options(stringsAsFactors=FALSE)
@@ -8,7 +9,7 @@ ExCluster <- function(exonCounts=NULL, cond.Nums=NULL, annot.GFF = NULL, GFF.Fil
     message("","Initializing ...",sep="\n")
 
     ### check to make sure a normalized exon count matrix was provided as input
-    if (is.null(exonCounts) == TRUE){
+    if (is.null(exon.Counts) == TRUE){
         stop(call = ExCluster_errors$exon_counts_missing)
     }
 
@@ -17,8 +18,8 @@ ExCluster <- function(exonCounts=NULL, cond.Nums=NULL, annot.GFF = NULL, GFF.Fil
         stop(call = ExCluster_errors$cond_nums_missing)
     }
 
-    ### ensure the number of columns in the exonCounts parameter equal the number of cond.Nums
-    if (ncol(exonCounts) != length(cond.Nums)){
+    ### ensure the number of columns in the exon.Counts parameter equal the number of cond.Nums
+    if (ncol(exon.Counts) != length(cond.Nums)){
         stop(call = ExCluster_errors$exon_count_length_incorrect)
     }
 
@@ -42,8 +43,8 @@ ExCluster <- function(exonCounts=NULL, cond.Nums=NULL, annot.GFF = NULL, GFF.Fil
         stop(call = ExCluster_errors$not_enough_replicates_cond2)
     }
 
-    ### check to ensure that there are no duplicated data columns in exonCounts
-    CheckDups <- duplicated(t(exonCounts))
+    ### check to ensure that there are no duplicated data columns in exon.Counts
+    CheckDups <- duplicated(t(exon.Counts))
     if (any(CheckDups) == TRUE){
         DupCols <- which(CheckDups == TRUE)
         message(paste("Columns",DupCols,"were duplicated in your normalized exon count data.
@@ -70,8 +71,8 @@ ExCluster <- function(exonCounts=NULL, cond.Nums=NULL, annot.GFF = NULL, GFF.Fil
     ### ExCluster progression message
     message('','Reading in data ...','',sep="\n")
 
-    log2FC <- data.frame(exonCounts)
-    rm(exonCounts)
+    log2FC <- data.frame(exon.Counts)
+    rm(exon.Counts)
 
     ## Grab number of replicates from Cond1 and Cond2
     NumReps1 <- length(Indices1)
@@ -208,7 +209,7 @@ ExCluster <- function(exonCounts=NULL, cond.Nums=NULL, annot.GFF = NULL, GFF.Fil
 
     ###############################  IF TRUE, COMBINE COMMON EXONS  #####################################
 
-    if (CombineExons == TRUE){
+    if (combine.Exons == TRUE){
         ### ExCluster progression message
         message("Combining common exons ...","",sep="\n")
 
@@ -220,7 +221,7 @@ ExCluster <- function(exonCounts=NULL, cond.Nums=NULL, annot.GFF = NULL, GFF.Fil
         newIDstart <- 1
         # Variable start will be used through loop
         Start <- 1
-        # make newlog2FC list to dump results from CombineExons into
+        # make newlog2FC list to dump results from combine.Exons into
         temp_log2FC <- vector("list", 1)
 
         for (i in seq(NROW_GFF)){
@@ -410,8 +411,11 @@ ExCluster <- function(exonCounts=NULL, cond.Nums=NULL, annot.GFF = NULL, GFF.Fil
 
     ### if out.Dir was specified, write out ExCluster results
     if (is.null(out.Dir) == FALSE){
-        # check to make sure out.Dir path can be written to
+        # try to write the out.Dir
+        try(dir.create(out.Dir, recursive=TRUE, showWarnings = FALSE), silent=TRUE)
+        # now check the file directory can be written to
         WriteCheck <- file.access(out.Dir, mode=2)
+        # now proceed if WriteCheck == 0
         if (WriteCheck == 0){
             # now check to see if a result.Filename was specified
             if (is.null(result.Filename) == TRUE){
@@ -424,33 +428,57 @@ ExCluster <- function(exonCounts=NULL, cond.Nums=NULL, annot.GFF = NULL, GFF.Fil
             if (file.exists(paste(fullFilename,".txt",sep="")) == TRUE){
                 fullFilename <- paste(fullFilename,Sys.time(),sep="")
             }
-            write.table(final.log2FC,file=paste(fullFilename,".txt",sep=""),sep="\t",
-                        quote=FALSE,row.names=FALSE,col.names=TRUE)
+            # try to write the file no matter what
+            try(write.table(final.log2FC,file=paste(fullFilename,".txt",sep=""),sep="\t",
+                            quote=FALSE,row.names=FALSE,col.names=TRUE), silent=TRUE)
+            # out.Dir works
+            outdir.Check <- TRUE
         }else{
-            warning(call = ExCluster_errors$ExClust_bad_outDir)
+            message(ExCluster_errors$ExClust_bad_outDir)
+            # out.Dir unavailable to write to
+            outdir.Check <- FALSE
         }
-    }
 
-    ### check to see if we plot the results from ExCluster
-    if (plot.Results == TRUE){
-        if (is.null(out.Dir) == FALSE){
-            # new images folder to write to
-            out.Dir <- paste(out.Dir,"/exon_log2FC_images/",sep="")
-            # create the images directly if it doesn't already exist
-            WriteCheck <- file.access(out.Dir, mode=2)
-            if (WriteCheck != 0){
-                dir.create(path = out.Dir,recursive = TRUE)
+        ### Now see if we need to plot images
+        if (plot.Results == TRUE){
+            if (outdir.Check == TRUE && is.null(out.Dir) == FALSE){
+                # set plot.Type to NULL to begin with
+                plot.Type <- NULL
+                # new images folder to write to
+                out.Dir <- paste(out.Dir,"/exon_log2FC_images/",sep="")
+                # try to make out.Dir no matter what
+                try(dir.create(out.Dir, recursive=TRUE, showWarnings = FALSE), silent=TRUE)
+                # now check the file directory can be written to
+                WriteCheck <- file.access(out.Dir, mode=2)
+                # if this check passes, proceed
+                if (WriteCheck == 0){
+                    # make sure that FDR.cutoff is less than 0.2, or set it back to 0.05
+                    if (FDR.cutoff > 0.2){
+                        warning(call = ExCluster_errors$FDR_cutoff_too_high)
+                        FDR.cutoff <- 0.05
+                    }
+                    # now test to make sur we can plot PNG and/or bitmap
+                    test.PNG <- substr(testPNGplot(out.Dir)[1],1,5)
+                    test.bitmap <- substr(testBMplot(out.Dir)[1],1,5)
+                    # if one of them passes, run the plot
+                    if (test.bitmap != "Error"){
+                        plot.Type <- "bitmap"
+                    }else if (test.PNG != "Error"){
+                        plot.Type <- "PNG"
+                    }else{
+                        warning(call = ExCluster_errors$plot_type_failure)
+                    }
+                    # run plotting function if plot.Type is not NULL
+                    if (is.null(plot.Type) == FALSE){
+                        plotExonlog2FC(results.Data=final.log2FC, out.Dir=out.Dir,
+                                       FDR.cutoff=FDR.cutoff, plot.Type=plot.Type)
+                    }
+                }
+            }else{
+                warning(call = ExCluster_errors$plot_results_no_outDir)
             }
-            # make sure that FDR.cutoff is less than 0.2, or set it back to 0.05
-            if (FDR.cutoff > 0.2){
-                warning(call = ExCluster_errors$FDR_cutoff_too_high)
-                FDR.cutoff <- 0.05
-            }
-            # run plotting function
-            plotExonlog2FC(results.Data=final.log2FC, out.Dir=out.Dir, FDR.cutoff=FDR.cutoff)
-        }else{
-            warning(call = ExCluster_errors$plot_results_no_outDir)
         }
+
     }
 
     ### return final data frame resutls
