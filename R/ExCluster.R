@@ -443,7 +443,7 @@ ExCluster <- function(exon.Counts=NULL, cond.Nums=NULL, annot.GFF = NULL, GFF.Fi
         if (plot.Results == TRUE){
             if (outdir.Check == TRUE && is.null(out.Dir) == FALSE){
                 # set plot.Type to NULL to begin with
-                plot.Type <- NULL
+                plot.Type <- "bitmap"
                 # new images folder to write to
                 out.Dir <- paste(out.Dir,"/exon_log2FC_images/",sep="")
                 # try to make out.Dir no matter what
@@ -458,18 +458,27 @@ ExCluster <- function(exon.Counts=NULL, cond.Nums=NULL, annot.GFF = NULL, GFF.Fi
                         FDR.cutoff <- 0.05
                     }
                     # now test to make sur we can plot PNG and/or bitmap
-                    test.PNG <- substr(testPNGplot(out.Dir)[1],1,5)
                     test.bitmap <- substr(testBMplot(out.Dir)[1],1,5)
                     # if one of them passes, run the plot
-                    if (test.bitmap != "Error"){
-                        plot.Type <- "bitmap"
-                    }else if (test.PNG != "Error"){
+                    if (test.bitmap == "Error"){
+                        # try to plot PNG
+                        test.PNG <- substr(testPNGplot(out.Dir)[1],1,5)
                         plot.Type <- "PNG"
+                        # check if PNG plot succeeds
+                        if (test.PNG == "Error"){
+                            # plotting has failed
+                            plot.Check <- FALSE
+                            warning(call = ExCluster_errors$plot_type_failure)
+                        }else{
+                            # plotting for "PNG" succeeded
+                            plot.Check <- TRUE
+                        }
                     }else{
-                        warning(call = ExCluster_errors$plot_type_failure)
+                        # plotting for "bitmap" succeeded
+                        plot.Check <- TRUE
                     }
                     # run plotting function if plot.Type is not NULL
-                    if (is.null(plot.Type) == FALSE){
+                    if (is.null(plot.Type) == FALSE && plot.Check == TRUE){
                         plotExonlog2FC(results.Data=final.log2FC, out.Dir=out.Dir,
                                        FDR.cutoff=FDR.cutoff, plot.Type=plot.Type)
                     }

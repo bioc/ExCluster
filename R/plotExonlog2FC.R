@@ -33,21 +33,38 @@ plotExonlog2FC <- function(results.Data=NULL, out.Dir=NULL, FDR.cutoff=0.05, plo
         plot.Type <- "bitmap"
     }
 
-    ### now check that PNG and bitmap can be plotted
-    test.bitmap <- substr(testBMplot(out.Dir)[1],1,5)
-    test.PNG <- substr(testPNGplot(out.Dir)[1],1,5)
+    ### now check that PNG and/or bitmap can be plotted
+    # plot.Check is FALSE by default, unless proven TRUE
+    plot.Check <- FALSE
     if (plot.Type == "bitmap"){
+        # check if bitmap can be plotted
+        test.bitmap <- substr(testBMplot(out.Dir)[1],1,5)
         if (test.bitmap == "Error"){
+            # check if PNG can be plotted
+            test.PNG <- substr(testPNGplot(out.Dir)[1],1,5)
             plot.Type <- "PNG"
+            if (test.PNG != "Error"){
+                plot.Check <- TRUE
+            }
+        }else{
+            plot.Check <- TRUE
         }
     }else{
+        # if plot.Type == "PNG", repeat the steps above in reverse
+        test.PNG <- substr(testPNGplot(out.Dir)[1],1,5)
         if (test.PNG == "Error"){
+            test.bitmap <- substr(testBMplot(out.Dir)[1],1,5)
             plot.Type <- "bitmap"
+            if (test.bitmap != "Error"){
+                plot.Check <- TRUE
+            }
+        }else{
+            plot.Check <- TRUE
         }
     }
 
     ### make sure either bitmap or PNG passed
-    if (test.bitmap == "Error" && test.PNG == "Error"){
+    if (plot.Check == FALSE){
         stop(call = ExCluster_errors$plot_type_failure)
     }
 
