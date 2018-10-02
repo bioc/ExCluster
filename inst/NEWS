@@ -66,3 +66,6 @@ Changes in Version 0.99.12
 - Bug-tested plot.Type so machines with at least Ghostscript or X11 forwarding will have minimal issues
 - Changed how files/folders are written & how write-permissions are detected, to avoid bugs
 - Updated the vignette to use BiocManager instead of biocLite
+
+Changes in Version 0.99.13
+- Fixed bugs that would cause ExCluster to either crash or not properly plot results in some cases
